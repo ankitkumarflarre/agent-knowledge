@@ -332,7 +332,11 @@ Each phase ends with an **exit gate**: a scenario that passes end to end on the 
 
 ### P0: Foundations & rule extraction (starts immediately, prerequisite for all tracks)
 - **Build:**
-  - `mycel add module billing` and `0001_init.sql` (§4), with the MIE tenant.
+  - ✅ Module scaffold `modules/billing/` exists and is wired in the app `mycelfile` (2026-09-30). Still to do: `0001_init.sql` (§4) with the MIE tenant.
+  - ✅ Sidebar and empty screens exist (2026-09-30):
+    - One "Billing" section declared in `service/logic/nav.go`, with 8 entries: accounts, invoices, payments, lockbox, cash-suspense, nonpay, commission, receivables. There is also a drill-down `account` object page.
+    - The pages live in `ui/src/pages/`, registered in `ui/src/lib/views.ts` and `pages/index.ts`. Keep the ids in sync across all three.
+    - The policy module also has a "Billing" sidebar group (Renewal Billing), so check how the shell renders the two together. See B-12.
   - The money type, the error envelope and the outbox.
   - **Temporal context from the time-travel headers** (B-24).
   - Config versioning and seed loading.

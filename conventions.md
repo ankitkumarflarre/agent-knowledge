@@ -10,7 +10,8 @@ These conventions apply to every agent and every team member working on **Billin
 
 ## 1. Where code lives
 - **Billing is a module in the main app:** `acme.property.us.policy.app/modules/billing/`.
-  - Create it with `mycel add module billing`, run from the app directory. Don't create a new mycel app.
+  - **Done 2026-09-30:** the scaffold is at `modules/billing/` and wired in the app `mycelfile`. Don't create a new mycel app.
+  - ⚠ **Gotcha:** `mycel add module <name>` also **rewrites `.mycel.infra/docker-compose.yml` into a standalone form**. That drops the cluster wiring (IAM, shared network, OTEL, KPI). To add a module inside this cluster, scaffold it in a scratch copy of the app, copy `modules/<name>/` across, append its `[[compose]]` block to the app `mycelfile`, and let the cluster's `mycel up` regenerate the compose file.
   - The module gets its own Postgres schema, `billing`.
 - **Module layout.** This mirrors `modules/ledger/`, which is the most recent example:
   ```
