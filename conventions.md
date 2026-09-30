@@ -80,6 +80,9 @@ These conventions apply to every agent and every team member working on **Billin
 - Register everything in `wfc/workflows/register.go`. Set the search attributes `MycelState` and `MycelPhase`. Use the task queue `acme-property-us-policy-tasks`.
 - **Never fail silently.** Use bounded retries, then refer the case to a human or send it to a dead-letter queue, and alert (rulebook §1.4).
 
+### Business time (time-travel testing)
+Siddhi requires a per-user **temporal context**: effective time, business transaction time, GL posting time and system record time, passed in **request headers**. Each tester can then use their own test date. Billing code must take "now" from that context (and `workflow.Now` in Temporal), **never from the server clock directly**. The header contract isn't designed yet. See the Siddhi backlog, §3.
+
 ## 6. Integrations (`integ`)
 - Each adapter returns a normalised result with status `OK | PARTIAL | UNAVAILABLE`. The Billing domain never sees a vendor payload.
 - Adapters use timeouts, bounded retries with backoff, a circuit breaker and a readiness check. Each adapter declares whether it *degrades*, *refers*, *retries then refers* or *blocks*. For payment capture that means retry, then refer; **never assume the payment succeeded**.

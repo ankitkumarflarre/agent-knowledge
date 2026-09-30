@@ -79,6 +79,7 @@
 - ❓ Is the boundary ≥ or >? Duck Creek never confirmed it. Test it explicitly.
 
 ### 2.5 Renewal
+- ✅ **Resolved by the client (Siddhi F36):** keep the insured's plan at renewal, and don't force it to Annual. The Duck Creek forced-Annual rule below is **not** carried forward.
 - ❓ Duck Creek **forces renewals to the Annual plan**, except for mortgagee and premium-finance plans. It matches by caption, which is fragile. Confirm whether the business still wants this, or whether the insured's plan should carry over.
 - ✅ Renewal billing config for mortgagee and premium-finance terms is reset rather than carried over.
 

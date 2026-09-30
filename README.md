@@ -15,7 +15,8 @@ short and factual; link to existing docs rather than copying them.
 
 | Doc | Type | Summary |
 |---|---|---|
-| [plan/billing-implementation-plan.md](plan/billing-implementation-plan.md) | Plan | **End-to-end Billing implementation plan**: data model, workflows, integrations, APIs, screens, phases P0–P7 with exit gates, open decisions B-01…B-15 |
+| [references/project-siddhi-phase1-backlog.md](references/project-siddhi-phase1-backlog.md) | Reference | **The big picture: Project Siddhi Phase 1 scope** (Manatee / FL / Home & Dwelling, renewal-only, first renewal offer April 2027), 8 lifecycle stages, 81 features. **Billing = stages 5–7 (features 34–62).** §6 lists conflicts with our docs. **Takes precedence over earlier notes** |
+| [plan/billing-implementation-plan.md](plan/billing-implementation-plan.md) | Plan | **End-to-end Billing implementation plan, v2, re-based on Siddhi Phase 1** (renewal-only). Data model, workflows, integrations, APIs, internal and portal screens, phases P0–P8 in 4 parallel tracks with need-by dates, feature→phase map for F34–F62 and F70, open decisions B-01…B-28 |
 | [architecture/billing-domain.md](architecture/billing-domain.md) | Architecture | **Billing spec**: scope, Policy↔Billing contracts, flow, allocation and delinquency rules, integrations, personas, audit, open questions |
 | [architecture/billing-rules-from-duckcreek.md](architecture/billing-rules-from-duckcreek.md) | Architecture | **Billing rulebook**: pay plans, schedule, invoicing, fees, follow-ups (PCN, cancel, lapse, reinstate, collections) carried over from Duck Creek. Marked adopt / config / confirm / avoid |
 | [references/duckcreek/](references/duckcreek/README.md) | Reference | Digests and originals of 3 Duck Creek analyses (pay plans, installment/invoice, follow-ups) |
