@@ -1,0 +1,1068 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Insurance Architecture</title><style>
+:root{--bg:#071120;--panel:#0d2138;--text:#eef5ff;--muted:#a4b6cd;--p:#48a8ff;--b:#f6b84a;--c:#ff718f;--y:#9a83ff;--o:#38d2a1;--i:#59d8e8}*{box-sizing:border-box}html,body{height:100%;margin:0}body{background:radial-gradient(circle at 10% 0,#15365d,transparent 30%),var(--bg);color:var(--text);font-family:Segoe UI,Arial;overflow:hidden}
+
+/* ===== App shell: sidebar + main ===== */
+.app{display:flex;height:100vh;width:100vw;align-items:stretch}
+.sidebar{flex:0 0 auto;width:252px;background:#081a2e;border-right:1px solid #1c344c;height:100vh;display:flex;flex-direction:column;transition:width .22s ease;overflow:hidden}
+.sidebar.collapsed{width:60px}
+.side-head{display:flex;align-items:center;gap:10px;padding:14px 12px;border-bottom:1px solid #1c344c;flex:0 0 auto}
+.side-toggle{width:34px;height:34px;border-radius:9px;border:1px solid #34506e;background:#0d223b;color:#fff;cursor:pointer;font-size:16px;flex:0 0 auto;line-height:1}
+.side-toggle:hover{background:#15304f}
+.side-title{font-weight:700;font-size:14px;color:#dce8f7;white-space:nowrap;overflow:hidden}
+.sidebar.collapsed .side-title{display:none}
+.side-nav{flex:1 1 auto;overflow-y:auto;padding:10px 8px;scrollbar-width:thin;scrollbar-color:#3f6a94 #081a2e}
+.side-nav::-webkit-scrollbar{width:10px}
+.side-nav::-webkit-scrollbar-track{background:#081a2e}
+.side-nav::-webkit-scrollbar-thumb{background:#3f6a94;border-radius:8px}
+.nav-group{margin-bottom:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;color:#b8c8dd;font-size:13px;white-space:nowrap;user-select:none}
+.nav-item:hover{background:#102942;color:#fff}
+.nav-item.active{background:#1b4f7e;color:#fff}
+.nav-item .ic{width:18px;text-align:center;flex:0 0 auto;font-size:14px}
+.nav-item .chev{margin-left:auto;transition:transform .2s;flex:0 0 auto;font-size:11px;color:#7c93ad}
+.nav-item.parent.open .chev{transform:rotate(90deg)}
+.sidebar.collapsed .lbl,.sidebar.collapsed .chev{display:none}
+.sidebar.collapsed .nav-sub{display:none!important}
+.sidebar.collapsed .nav-item{justify-content:center}
+.nav-sub{display:none;flex-direction:column;padding-left:28px;margin:2px 0 6px}
+.nav-sub.open{display:flex}
+.nav-sub .nav-item{font-size:12.5px;padding:7px 10px;color:#9fb3cc}
+.nav-sub .nav-item .ic{font-size:11px;opacity:.8}
+.nav-sep{height:1px;background:#1c344c;margin:8px 6px}
+
+/* ===== Main content ===== */
+.main{flex:1 1 auto;height:100vh;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#3f6a94 #071120}
+.main::-webkit-scrollbar{width:12px}
+.main::-webkit-scrollbar-track{background:#071120}
+.main::-webkit-scrollbar-thumb{background:#3f6a94;border-radius:8px;border:2px solid #071120}
+.main::-webkit-scrollbar-thumb:hover{background:#548fc4}
+.wrap{width:100%;max-width:none;min-height:100%;margin:0;padding:16px 20px;display:flex;flex-direction:column}
+header{flex:0 0 auto}h1{font-size:clamp(24px,2.6vw,42px);margin:0}header p{color:var(--muted);margin:6px 0 0}
+.tools{flex:0 0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+.tools button{border:1px solid #34506e;background:#0d223b;color:white;padding:8px 13px;border-radius:20px;cursor:pointer}
+.tools button.active{background:#1b4f7e}
+.zoomhud{flex:0 0 auto;display:flex;align-items:center;gap:6px;margin-left:auto;padding-left:10px;border-left:1px solid #294968}
+.zoomhud button{width:34px;height:34px;padding:0;border-radius:10px;font-size:16px}
+.zoomhud .wide{width:auto;padding:0 12px;font-size:12px}
+.zoomread{min-width:46px;text-align:center;color:#bcd0e6;font-size:12px}
+.hint{flex:0 0 auto;margin:0 0 10px;color:#8ea3bd;font-size:11.5px}
+
+/* ===== Diagram panel ===== */
+.panel{position:relative;flex:0 0 auto;height:60vh;min-height:340px;width:100%}
+.scroll{position:absolute;inset:0;overflow:auto;width:100%;height:100%;border-radius:22px;border:1px solid #294968;background:#0a192bea;box-shadow:0 20px 60px #0008;cursor:grab;user-select:none;scrollbar-width:thin;scrollbar-color:#3f6a94 #0a192b}
+.scroll.dragging{cursor:grabbing}
+.scroll::-webkit-scrollbar{width:12px;height:12px}
+.scroll::-webkit-scrollbar-track{background:#0a192b}
+.scroll::-webkit-scrollbar-thumb{background:#3f6a94;border-radius:8px;border:2px solid #0a192b}
+.scroll::-webkit-scrollbar-thumb:hover{background:#548fc4}
+.canvas{position:relative;width:1180px;height:720px;transform-origin:0 0;will-change:transform}
+.zone{position:absolute;left:22px;width:1136px;border:1px dashed #3a5976;border-radius:17px;background:#15314b33}
+.zone b{position:absolute;top:9px;left:13px;color:#819bb8;font-size:11px;letter-spacing:1.2px;text-transform:uppercase}
+.z1{top:22px;height:130px}.z2{top:170px;height:280px}.z3{top:468px;height:100px}.z4{top:586px;height:110px}
+.n{--x:white;position:absolute;width:185px;min-height:88px;padding:13px;border:1px solid var(--x);border-radius:15px;background:linear-gradient(145deg,color-mix(in srgb,var(--x) 14%,#10253e),#09182a);z-index:3;box-shadow:0 10px 25px #0006;transition:.2s}
+.n:hover,.n.focus{transform:translateY(-3px);box-shadow:0 0 0 2px var(--x),0 14px 32px #0009}
+.n h3{font-size:14px;margin:0 0 6px;color:var(--x)}
+.n p{font-size:11px;line-height:1.4;margin:0;color:#bdcce0}
+.portal{--x:var(--o);left:85px;top:52px}.partner{--x:var(--o);left:400px;top:52px}.ops{--x:var(--o);left:715px;top:52px}
+.policy{--x:var(--p);left:65px;top:220px}.billing{--x:var(--b);left:285px;top:220px}.claims{--x:var(--c);left:505px;top:220px}.party{--x:var(--y);left:725px;top:220px}.docs{--x:#cf91ff;left:940px;top:220px}
+.rating{--x:var(--p);left:65px;top:335px}.payments{--x:var(--b);left:285px;top:335px}.providers{--x:var(--c);left:505px;top:335px}.identity{--x:var(--y);left:725px;top:335px}
+.api{--x:var(--i);left:70px;top:495px}.events{--x:var(--i);left:310px;top:495px}.workflow{--x:var(--i);left:550px;top:495px}.security{--x:var(--i);left:790px;top:495px}
+.data{--x:#9ed15f;top:615px}.ods{left:60px}.lake{left:310px}.mdm{left:560px}.finance{left:810px}
+svg{position:absolute;inset:0;z-index:1}
+.l{fill:none;stroke:#718dab;stroke-width:2;opacity:.65;marker-end:url(#a)}
+.l.d{stroke-dasharray:7 6}.l.hot{stroke:#61e8fa;stroke-width:3;opacity:1}.l.flow{stroke-dasharray:9 7;animation:f 1s linear infinite}
+@keyframes f{to{stroke-dashoffset:-32}}
+
+/* ===== Cards ===== */
+.cards{width:100%;flex:0 0 auto;display:grid;grid-template-columns:2fr 1fr;gap:16px;margin:14px 0 4px}
+.card{background:#0d2035;border:1px solid #294663;border-radius:17px;padding:18px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mini{background:#09192b;border:1px solid #233e59;border-radius:11px;padding:11px}
+.mini b{color:#79ccff}
+.mini p,.card li{font-size:12px;color:#b9c9dc;line-height:1.5}
+@media(max-width:850px){.cards{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
+
+/* ===== Placeholder page ===== */
+.placeholder{display:none}
+.placeholder-body{margin-top:20px;background:#0d2035;border:1px solid #294663;border-radius:17px;padding:40px;text-align:center;color:#a9bdd4}
+.placeholder-body .big{font-size:40px;margin-bottom:10px}
+.placeholder-body h2{color:#eef5ff;margin:0 0 8px}
+.crumb{color:#7fa8d6;font-size:12px;letter-spacing:.4px;text-transform:uppercase;margin-bottom:4px}
+
+/* ===== Policy UI page ===== */
+.policy-page{display:none}
+.section-title{display:flex;align-items:baseline;gap:10px;margin:26px 0 12px}
+.section-title h2{margin:0;font-size:19px}
+.section-title span.sub{color:#8199b4;font-size:12px}
+.persona-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
+.persona-tab{border:1px solid #34506e;background:#0d223b;color:#cfe0f3;padding:9px 15px;border-radius:20px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:7px}
+.persona-tab .ic{font-size:15px}
+.persona-tab.active{background:#1b4f7e;border-color:#4d8cc4;color:#fff}
+.widget-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px}
+.widget{background:#0d2035;border:1px solid #294663;border-radius:15px;padding:14px}
+.widget h4{margin:0 0 10px;font-size:12.5px;color:#8fc4ff;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:6px}
+.widget ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.widget li{font-size:12.5px;color:#c4d3e5;display:flex;justify-content:space-between;gap:8px;background:#09192b;border:1px solid #1e3652;border-radius:9px;padding:7px 9px}
+.widget li b{color:#eef5ff;font-weight:600}
+.pill{font-size:10.5px;padding:2px 8px;border-radius:20px;border:1px solid currentColor;white-space:nowrap}
+.pill.warn{color:#ffb15c}.pill.ok{color:#5fe0a8}.pill.risk{color:#ff7a90}.pill.info{color:#66c7ff}
+@media(max-width:1200px){.widget-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.widget-grid{grid-template-columns:1fr}}
+
+.legend-row{display:flex;flex-wrap:wrap;gap:14px;margin:8px 0 16px;font-size:11.5px;color:#9db2ca}
+.legend-row span{display:inline-flex;align-items:center;gap:6px}
+.legend-row i{width:11px;height:11px;border-radius:4px;display:inline-block}
+.flow-wrap{background:#0a192bea;border:1px solid #294968;border-radius:20px;padding:22px 18px;overflow-x:auto}
+.lifecycle-flow{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:max-content;padding-bottom:4px}
+.flow-row{display:flex;align-items:center;gap:6px}
+.stage{--x:var(--p);border:1px solid var(--x);background:linear-gradient(145deg,color-mix(in srgb,var(--x) 16%,#10253e),#09182a);color:#eef5ff;border-radius:12px;padding:10px 13px;font-size:12px;white-space:nowrap;box-shadow:0 6px 16px #0006;position:relative;cursor:default}
+.stage b{display:block;color:var(--x);font-size:11.5px;margin-bottom:2px}
+.stage.new{--x:var(--p)}.stage.rev{--x:var(--i)}.stage.svc{--x:var(--b)}.stage.term{--x:var(--c)}.stage.ref{--x:var(--y)}.stage.sys{--x:#59d8e8}.stage.doc{--x:#cf91ff}.stage.y{--x:var(--y)}
+
+
+.arrow{color:#5b7fa3;font-size:16px;flex:0 0 auto}
+.loop{display:flex;align-items:center;gap:4px;font-size:10.5px;color:#8199b4;padding:2px 8px;border:1px dashed #3a5976;border-radius:20px;white-space:nowrap;margin:0 2px}
+.branch-note{font-size:10.5px;color:#8199b4;text-align:center;margin-top:4px}
+
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+.infobox{background:#0d2035;border:1px solid #294663;border-radius:15px;padding:16px}
+.infobox h4{margin:0 0 8px;font-size:13.5px;color:#ffcf85;display:flex;align-items:center;gap:7px}
+.infobox p{margin:0 0 8px;font-size:12.5px;color:#b9c9dc;line-height:1.55}
+.infobox ol,.infobox ul{margin:0;padding-left:18px;font-size:12px;color:#b9c9dc;line-height:1.6}
+@media(max-width:850px){.info-grid{grid-template-columns:1fr}}
+
+.audit-wrap{overflow-x:auto;border:1px solid #294663;border-radius:15px}
+table.audit{width:100%;border-collapse:collapse;font-size:12px;min-width:760px}
+table.audit th{text-align:left;background:#102942;color:#9dc4ee;padding:9px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid #294663}
+table.audit td{padding:9px 12px;border-bottom:1px solid #1c344c;color:#c4d3e5}
+table.audit tr:last-child td{border-bottom:none}
+table.audit tr:hover td{background:#0d2035}
+</style></head><body>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head">
+      <button class="side-toggle" id="sideToggle" title="Collapse/expand menu">☰</button>
+      <span class="side-title">Flarre Core Platform</span>
+    </div>
+    <nav class="side-nav" id="sideNav">
+      <div class="nav-item active" data-page="architecture" data-label="Architecture Diagram"><span class="ic">🧩</span><span class="lbl">Architecture Diagram</span></div>
+
+      <div class="nav-sep"></div>
+
+      <div class="nav-group">
+        <div class="nav-item parent" data-group="ui"><span class="ic">🖥️</span><span class="lbl">User Interface</span><span class="chev">▸</span></div>
+        <div class="nav-sub" data-parent="ui">
+          <div class="nav-item" data-page="ui-policy" data-label="User Interface — Policy"><span class="ic">•</span><span class="lbl">Policy</span></div>
+          <div class="nav-item" data-page="ui-billing" data-label="User Interface — Billing"><span class="ic">•</span><span class="lbl">Billing</span></div>
+          <div class="nav-item" data-page="ui-claims" data-label="User Interface — Claims"><span class="ic">•</span><span class="lbl">Claims</span></div>
+          <div class="nav-item" data-page="ui-portal" data-label="User Interface — Portal"><span class="ic">•</span><span class="lbl">Portal</span></div>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-item parent" data-group="forms"><span class="ic">📝</span><span class="lbl">Forms</span><span class="chev">▸</span></div>
+        <div class="nav-sub" data-parent="forms">
+          <div class="nav-item" data-page="forms-policy" data-label="Forms — Policy"><span class="ic">•</span><span class="lbl">Policy</span></div>
+          <div class="nav-item" data-page="forms-billing" data-label="Forms — Billing"><span class="ic">•</span><span class="lbl">Billing</span></div>
+          <div class="nav-item" data-page="forms-claims" data-label="Forms — Claims"><span class="ic">•</span><span class="lbl">Claims</span></div>
+          <div class="nav-item" data-page="forms-portal" data-label="Forms — Portal"><span class="ic">•</span><span class="lbl">Portal</span></div>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-item parent" data-group="rating"><span class="ic">⭐</span><span class="lbl">Rating</span><span class="chev">▸</span></div>
+        <div class="nav-sub" data-parent="rating">
+          <div class="nav-item" data-page="rating-policy" data-label="Rating — Policy"><span class="ic">•</span><span class="lbl">Policy</span></div>
+          <div class="nav-item" data-page="rating-billing" data-label="Rating — Billing"><span class="ic">•</span><span class="lbl">Billing</span></div>
+          <div class="nav-item" data-page="rating-claims" data-label="Rating — Claims"><span class="ic">•</span><span class="lbl">Claims</span></div>
+          <div class="nav-item" data-page="rating-portal" data-label="Rating — Portal"><span class="ic">•</span><span class="lbl">Portal</span></div>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-item parent" data-group="integration"><span class="ic">🔗</span><span class="lbl">Integration</span><span class="chev">▸</span></div>
+        <div class="nav-sub" data-parent="integration">
+          <div class="nav-item" data-page="integration-policy" data-label="Integration — Policy"><span class="ic">•</span><span class="lbl">Policy</span></div>
+          <div class="nav-item" data-page="integration-billing" data-label="Integration — Billing"><span class="ic">•</span><span class="lbl">Billing</span></div>
+          <div class="nav-item" data-page="integration-claims" data-label="Integration — Claims"><span class="ic">•</span><span class="lbl">Claims</span></div>
+          <div class="nav-item" data-page="integration-portal" data-label="Integration — Portal"><span class="ic">•</span><span class="lbl">Portal</span></div>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-item parent" data-group="usermgmt"><span class="ic">👤</span><span class="lbl">User Management</span><span class="chev">▸</span></div>
+        <div class="nav-sub" data-parent="usermgmt">
+          <div class="nav-item" data-page="usermgmt-policy" data-label="User Management — Policy"><span class="ic">•</span><span class="lbl">Policy</span></div>
+          <div class="nav-item" data-page="usermgmt-billing" data-label="User Management — Billing"><span class="ic">•</span><span class="lbl">Billing</span></div>
+          <div class="nav-item" data-page="usermgmt-claims" data-label="User Management — Claims"><span class="ic">•</span><span class="lbl">Claims</span></div>
+          <div class="nav-item" data-page="usermgmt-portal" data-label="User Management — Portal"><span class="ic">•</span><span class="lbl">Portal</span></div>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-item parent" data-group="paymentmgmt"><span class="ic">💳</span><span class="lbl">Payment Management</span><span class="chev">▸</span></div>
+        <div class="nav-sub" data-parent="paymentmgmt">
+          <div class="nav-item" data-page="paymentmgmt-policy" data-label="Payment Management — Policy"><span class="ic">•</span><span class="lbl">Policy</span></div>
+          <div class="nav-item" data-page="paymentmgmt-billing" data-label="Payment Management — Billing"><span class="ic">•</span><span class="lbl">Billing</span></div>
+          <div class="nav-item" data-page="paymentmgmt-claims" data-label="Payment Management — Claims"><span class="ic">•</span><span class="lbl">Claims</span></div>
+          <div class="nav-item" data-page="paymentmgmt-portal" data-label="Payment Management — Portal"><span class="ic">•</span><span class="lbl">Portal</span></div>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-item parent" data-group="entdata"><span class="ic">🗄️</span><span class="lbl">Enterprise Data and Downstream</span><span class="chev">▸</span></div>
+        <div class="nav-sub" data-parent="entdata">
+          <div class="nav-item" data-page="entdata-policy" data-label="Enterprise Data and Downstream — Policy"><span class="ic">•</span><span class="lbl">Policy</span></div>
+          <div class="nav-item" data-page="entdata-billing" data-label="Enterprise Data and Downstream — Billing"><span class="ic">•</span><span class="lbl">Billing</span></div>
+          <div class="nav-item" data-page="entdata-claims" data-label="Enterprise Data and Downstream — Claims"><span class="ic">•</span><span class="lbl">Claims</span></div>
+          <div class="nav-item" data-page="entdata-portal" data-label="Enterprise Data and Downstream — Portal"><span class="ic">•</span><span class="lbl">Portal</span></div>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+
+  <main class="main">
+    <div class="wrap" id="page-architecture"><header><h1>Insurance Core Platform Architecture</h1><p>Interactive reference architecture for Policy, Billing, Claims, Party and Portal. Select a domain to highlight dependencies or animate all flows.</p></header><div class="tools"><button class="active" data-f="all">All dependencies</button><button data-f="policy">Policy</button><button data-f="billing">Billing</button><button data-f="claims">Claims</button><button data-f="party">Party</button><button id="anim">Animate flow</button><button id="fit">Fill width</button><button id="resetView">Reset view</button><div class="zoomhud" aria-label="Zoom controls"><button id="zoomOut" title="Zoom out">−</button><span class="zoomread" id="zoomRead">100%</span><button id="zoomIn" title="Zoom in">+</button><button class="wide" id="fitHud">Fit</button><button class="wide" id="actual">100%</button></div></div><p class="hint">Scroll (or drag) to move around the diagram · Ctrl/⌘ + scroll or pinch to zoom · Double-click to fit width</p><div class="panel"><div class="scroll"><div class="canvas"><div class="zone z1"><b>Experience and distribution</b></div><div class="zone z2"><b>Insurance core domains</b></div><div class="zone z3"><b>Integration and shared platform</b></div><div class="zone z4"><b>Enterprise data and downstream</b></div><svg viewBox="0 0 1180 720"><defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7896b8"/></marker></defs><path class="l policy" d="M178 140C178 180 157 185 157 220"/><path class="l billing" d="M270 100C340 120 375 180 377 220"/><path class="l claims" d="M270 112C410 140 580 180 597 220"/><path class="l party" d="M270 88C480 75 795 145 817 220"/><path class="l policy billing" d="M250 265H285"/><path class="l policy claims" d="M250 240C345 190 475 195 505 245"/><path class="l policy party" d="M250 288C440 320 650 315 725 286"/><path class="l billing party" d="M470 272C580 280 665 280 725 272"/><path class="l claims party" d="M690 248C710 240 716 240 725 248"/><path class="l policy" d="M157 308V335"/><path class="l billing" d="M377 308V335"/><path class="l claims" d="M597 308V335"/><path class="l party" d="M817 308V335"/><path class="l d policy billing claims party" d="M157 423C157 465 160 475 162 495"/><path class="l d policy billing claims party" d="M377 423C377 465 398 475 402 495"/><path class="l d policy billing claims party" d="M597 423C597 465 638 475 642 495"/><path class="l d policy billing claims party" d="M817 423C817 465 868 475 882 495"/><path class="l d policy billing claims party" d="M162 560C162 600 153 600 153 615"/><path class="l d policy billing claims party" d="M402 560C402 600 403 600 403 615"/><path class="l d party" d="M642 560C642 600 653 600 653 615"/><path class="l d billing claims" d="M882 560C882 600 903 600 903 615"/></svg>
+    <div class="n portal"><h3>Customer / Agent Portal</h3><p>Quote, service, payments, FNOL, claim status and documents</p></div><div class="n partner"><h3>Partner & Producer</h3><p>Brokers, MGAs, aggregators and service partners</p></div><div class="n ops"><h3>Internal Operations</h3><p>Underwriting, billing, claims and service workbenches</p></div><div class="n policy" data-m="policy"><h3>Policy Administration</h3><p>Quote, bind, issue, endorsements, renewal, cancellation and reinstatement</p></div><div class="n billing" data-m="billing"><h3>Billing</h3><p>Accounts, invoices, instalments, receivables, collections and refunds</p></div><div class="n claims" data-m="claims"><h3>Claims</h3><p>FNOL, coverage verification, reserves, payments, recovery and closure</p></div><div class="n party" data-m="party"><h3>Party / Customer 360</h3><p>Person, organisation, address, roles, relationships and consent</p></div><div class="n docs"><h3>Documents</h3><p>Forms, notices, policies, invoices and claim packs</p></div><div class="n rating"><h3>Product, Rating & UW</h3><p>Product model, eligibility, pricing, rules and referrals</p></div><div class="n payments"><h3>Payment Hub</h3><p>Cards, ACH, gateway, tokenisation and reconciliation</p></div><div class="n providers"><h3>Claims Ecosystem</h3><p>Adjusters, repairers, medical, fraud and litigation</p></div><div class="n identity"><h3>Identity & Matching</h3><p>Authentication mapping, party matching and dedupe</p></div><div class="n api"><h3>API Gateway / BFF</h3><p>Channel APIs, security, routing and throttling</p></div><div class="n events"><h3>Event Bus</h3><p>Domain events, adapters and asynchronous synchronisation</p></div><div class="n workflow"><h3>Workflow & Rules</h3><p>Tasks, approvals, orchestration and SLA</p></div><div class="n security"><h3>Security & Observability</h3><p>IAM, audit, secrets, logs, metrics and traces</p></div><div class="n data ods"><h3>Operational Data Store</h3><p>Cross-domain operational views</p></div><div class="n data lake"><h3>Data Lake / Analytics</h3><p>BI, actuarial, fraud and ML</p></div><div class="n data mdm"><h3>MDM / Reference Data</h3><p>Codes, geography and product reference</p></div><div class="n data finance"><h3>GL / Finance / Reinsurance</h3><p>Posting, settlement and ceded flows</p></div></div></div></div><div class="cards"><section class="card"><h2>Principal connectivity and dependencies</h2><div class="grid"><div class="mini"><b>Policy → Billing</b><p>Account setup, premium, fees, instalment plan, effective dates, cancellation and reinstatement.</p></div><div class="mini"><b>Policy → Claims</b><p>Policy status, insured risks, coverage, limits, deductibles and endorsements at date of loss.</p></div><div class="mini"><b>Party → All domains</b><p>Stable party identity, addresses, communication preferences, roles and relationships.</p></div><div class="mini"><b>Billing → Policy</b><p>Delinquency, payment status, collections and non-payment cancellation indicators.</p></div><div class="mini"><b>Claims → Finance</b><p>Reserves, claim payments, recoveries, deductibles and downstream postings.</p></div><div class="mini"><b>Portal → Core</b><p>API-led journeys orchestrate services without direct access to domain databases.</p></div></div></section><aside class="card"><h2>Architecture guardrails</h2><ul><li>Domain-owned transactional data and versioned events.</li><li>APIs for commands and validation; events for propagation.</li><li>Correlation, policy, account, claim and party IDs end to end.</li><li>Idempotency, retries, dead letters and reconciliation.</li><li>Least privilege, encryption, consent and audit for PII.</li></ul></aside></div></div>
+
+    <div class="wrap placeholder" id="page-placeholder">
+      <header>
+        <div class="crumb" id="placeCrumb">Section</div>
+        <h1 id="placeTitle">Page title</h1>
+        <p id="placeDesc">This section is a placeholder.</p>
+      </header>
+      <div class="placeholder-body">
+        <div class="big">🚧</div>
+        <h2>Coming soon</h2>
+        <p>Content for this menu item hasn't been built yet. Use the left navigation to explore the Architecture Diagram or other domains.</p>
+      </div>
+    </div>
+
+    <div class="wrap policy-page" id="page-ui-policy">
+      <header>
+        <div class="crumb">User Interface</div>
+        <h1>Policy — Lifecycle, Dashboards &amp; Operations</h1>
+        <p>End-to-end policy lifecycle, persona-based dashboards, day-to-day operational widgets and full audit trail for the Policy Administration domain.</p>
+      </header>
+
+      <div class="section-title"><h2>Policy lifecycle flow</h2><span class="sub">Submission through closure, including revisions, renewal loop and out-of-sequence paths</span></div>
+      <div class="legend-row">
+        <span><i style="background:var(--p)"></i> New business</span>
+        <span><i style="background:var(--i)"></i> Revision / in-flight change</span>
+        <span><i style="background:var(--b)"></i> In-force servicing</span>
+        <span><i style="background:var(--c)"></i> Termination / lapse path</span>
+        <span><i style="background:var(--y)"></i> Referral / exception</span>
+        <span><i style="background:#59d8e8"></i> External integration call</span>
+        <span><i style="background:#cf91ff"></i> Document / packet generation</span>
+      </div>
+      <div class="flow-wrap">
+        <div class="lifecycle-flow">
+          <div class="stage new"><b>1 · Submission</b>Risk intake, applicant &amp; coverage capture</div>
+          <span class="arrow">➜</span>
+          <div class="stage sys"><b>🔗 Integration Call</b>MVR, credit, CLUE, fraud, sanctions checks</div>
+          <span class="arrow">➜</span>
+          <div class="stage new"><b>2 · Quote</b>Rating, eligibility, price generated</div>
+          <span class="arrow">➜</span>
+          <div class="stage rev"><b>Revise Quote</b>Re-rate on data / coverage change</div>
+          <span class="arrow">➜</span>
+          <div class="stage ref"><b>Referral</b>UW review for rules, limits, risk flags</div>
+          <span class="arrow">➜</span>
+          <div class="stage new"><b>3 · Bind</b>Quote accepted, coverage bound</div>
+          <span class="arrow">➜</span>
+          <div class="stage sys"><b>🔗 Integration Call</b>Prior carrier, inspection, payment gateway</div>
+          <span class="arrow">➜</span>
+          <div class="stage rev"><b>Revise Bind</b>Amend bound terms pre-issue</div>
+          <span class="arrow">➜</span>
+          <div class="stage new"><b>4 · Issue</b>Policy document &amp; number issued</div>
+          <span class="arrow">➜</span>
+          <div class="stage doc"><b>📄 Issue Packet</b>Dec page, policy docs, ID cards, disclosures generated</div>
+          <span class="arrow">➜</span>
+          <div class="stage rev"><b>Reissue</b>Correct / republish issued policy</div>
+          <span class="arrow">➜</span>
+          <div class="stage doc"><b>📄 Reissue Packet</b>Corrected document set regenerated</div>
+          <span class="arrow">➜</span>
+          <div class="stage svc"><b>In-Force</b>Active policy, billing &amp; claims eligible</div>
+        </div>
+        <div class="lifecycle-flow" style="margin-top:14px">
+          <div class="stage svc"><b>Endorsement</b>Mid-term change to coverage / risk / party</div>
+          <span class="arrow">➜</span>
+          <div class="stage doc"><b>📄 Endorsement Packet</b>Amended dec page &amp; endorsement forms</div>
+          <span class="arrow">➜</span>
+          <div class="stage svc"><b>Extension</b>Extend term without full renewal</div>
+          <span class="arrow">➜</span>
+          <div class="stage svc"><b>Renewal</b>Term-end re-underwrite &amp; re-rate</div>
+          <span class="arrow">➜</span>
+          <div class="stage sys"><b>🔗 Integration Call</b>Re-verify MVR / credit / loss history</div>
+          <span class="arrow">➜</span>
+          <div class="stage doc"><b>📄 Renewal Packet</b>Renewal offer / declaration documents</div>
+          <span class="loop">↻ Lapse if not renewed in time</span>
+          <span class="arrow">➜</span>
+          <div class="stage term"><b>Cancellation</b>Insured / company / non-pay driven</div>
+          <span class="arrow">➜</span>
+          <div class="stage term"><b>Notice of Cancellation</b>Statutory notice &amp; cure period</div>
+          <span class="arrow">➜</span>
+          <div class="stage doc"><b>📄 Notice Packet</b>Statutory NOC letter generated &amp; dispatched</div>
+          <span class="arrow">➜</span>
+          <div class="stage term"><b>Reinstate</b>Reactivate lapsed / cancelled policy</div>
+          <span class="loop">⇄ Out-of-sequence processing</span>
+        </div>
+
+        <div class="branch-note">Dashed loops indicate exception paths — lapse handling on Renewal/Reinstate, and out-of-sequence transaction processing when effective dates precede a later completed transaction.</div>
+      </div>
+
+      <div class="section-title"><h2>Persona dashboards</h2><span class="sub">Same lifecycle, tailored views per role</span></div>
+      <div class="persona-tabs" id="personaTabs">
+        <div class="persona-tab active" data-persona="underwriter"><span class="ic">🧮</span>Underwriter</div>
+        <div class="persona-tab" data-persona="agent"><span class="ic">🧑‍💼</span>Agent</div>
+        <div class="persona-tab" data-persona="admin"><span class="ic">🛠️</span>Admin</div>
+        <div class="persona-tab" data-persona="customer"><span class="ic">🙋</span>Customer</div>
+        <div class="persona-tab" data-persona="management"><span class="ic">📊</span>Management</div>
+      </div>
+
+      <div class="widget-grid" id="personaWidgets">
+        <!-- underwriter -->
+        <div class="widget persona-w" data-persona="underwriter"><h4>⏳ Referral queue</h4><ul>
+          <li><span>POL-88213 — high risk score</span><span class="pill risk">Referral</span></li>
+          <li><span>POL-88240 — limit exception</span><span class="pill warn">Pending</span></li>
+          <li><span>POL-88266 — reinstatement review</span><span class="pill info">New</span></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="underwriter"><h4>📌 My tasks</h4><ul>
+          <li><span>Approve rate override</span><span class="pill warn">Due today</span></li>
+          <li><span>Review revised bind terms</span><span class="pill info">In progress</span></li>
+          <li><span>Sign off renewal exception</span><span class="pill ok">On track</span></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="underwriter"><h4>🔔 Alerts</h4><ul>
+          <li><span>Referral SLA breach risk</span><span class="pill risk">2 items</span></li>
+          <li><span>Reinstatement window closing</span><span class="pill warn">1 item</span></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="underwriter"><h4>📈 Book performance</h4><ul>
+          <li><span>Loss ratio (YTD)</span><b>58%</b></li>
+          <li><span>Referral approval rate</span><b>81%</b></li>
+          <li><span>Avg. quote-to-bind time</span><b>2.4 days</b></li>
+        </ul></div>
+
+        <!-- agent -->
+        <div class="widget persona-w" data-persona="agent" style="display:none"><h4>🧾 Active quotes</h4><ul>
+          <li><span>Q-40219 — auto, 2 vehicles</span><span class="pill info">Draft</span></li>
+          <li><span>Q-40233 — home, coastal</span><span class="pill warn">Refer to UW</span></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="agent" style="display:none"><h4>📌 My tasks</h4><ul>
+          <li><span>Collect signed application</span><span class="pill warn">Due today</span></li>
+          <li><span>Follow up on NOC — POL-77410</span><span class="pill risk">Overdue</span></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="agent" style="display:none"><h4>🔔 Alerts</h4><ul>
+          <li><span>Renewal due in 15 days ×4</span><span class="pill warn">Action needed</span></li>
+          <li><span>Lapse risk — non payment ×1</span><span class="pill risk">Urgent</span></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="agent" style="display:none"><h4>💰 Book of business</h4><ul>
+          <li><span>Policies in force</span><b>142</b></li>
+          <li><span>Retention rate</span><b>88%</b></li>
+          <li><span>New business (MTD)</span><b>9</b></li>
+        </ul></div>
+
+        <!-- admin -->
+        <div class="widget persona-w" data-persona="admin" style="display:none"><h4>⚙️ System queues</h4><ul>
+          <li><span>Reissue requests pending print</span><span class="pill info">6</span></li>
+          <li><span>Out-of-sequence transactions</span><span class="pill warn">3</span></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="admin" style="display:none"><h4>📌 My tasks</h4><ul>
+          <li><span>Resolve OOS conflict — POL-91100</span><span class="pill risk">High priority</span></li>
+          <li><span>Batch reissue — endorsement docs</span><span class="pill info">Scheduled</span></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="admin" style="display:none"><h4>🔔 Alerts</h4><ul>
+          <li><span>Duplicate party match found</span><span class="pill warn">Review</span></li>
+          <li><span>Document generation failure ×2</span><span class="pill risk">Error</span></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="admin" style="display:none"><h4>🧰 Data quality</h4><ul>
+          <li><span>Open exceptions</span><b>11</b></li>
+          <li><span>Auto-resolved (24h)</span><b>27</b></li>
+          <li><span>Avg. resolution time</span><b>3.1 hrs</b></li>
+        </ul></div>
+
+        <!-- customer -->
+        <div class="widget persona-w" data-persona="customer" style="display:none"><h4>📄 My policy</h4><ul>
+          <li><span>Policy POL-55210 — Auto</span><span class="pill ok">Active</span></li>
+          <li><span>Renewal date</span><b>14 Feb</b></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="customer" style="display:none"><h4>📌 Action items</h4><ul>
+          <li><span>Confirm renewal terms</span><span class="pill warn">Due in 10 days</span></li>
+          <li><span>Upload updated ID document</span><span class="pill info">Requested</span></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="customer" style="display:none"><h4>🔔 Notices</h4><ul>
+          <li><span>Notice of cancellation issued</span><span class="pill risk">Cure by 30 days</span></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="customer" style="display:none"><h4>💳 Billing snapshot</h4><ul>
+          <li><span>Next instalment</span><b>$142.00</b></li>
+          <li><span>Due date</span><b>03 Mar</b></li>
+        </ul></div>
+
+        <!-- management -->
+        <div class="widget persona-w" data-persona="management" style="display:none"><h4>📊 Portfolio KPIs</h4><ul>
+          <li><span>Policies in force</span><b>128,430</b></li>
+          <li><span>New business growth</span><b>+4.2%</b></li>
+          <li><span>Renewal retention</span><b>86.5%</b></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="management" style="display:none"><h4>⚠️ Risk &amp; exceptions</h4><ul>
+          <li><span>Lapse rate (rolling 90d)</span><b>3.8%</b></li>
+          <li><span>Out-of-sequence backlog</span><b>17</b></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="management" style="display:none"><h4>🔔 Escalations</h4><ul>
+          <li><span>SLA breaches this week</span><span class="pill risk">5</span></li>
+        </ul></div>
+        <div class="widget persona-w" data-persona="management" style="display:none"><h4>🕒 Cycle times</h4><ul>
+          <li><span>Quote → Bind</span><b>2.4 days</b></li>
+          <li><span>Bind → Issue</span><b>0.6 days</b></li>
+
+          <li><span>Endorsement turnaround</span><b>1.1 days</b></li>
+        </ul></div>
+      </div>
+
+      <div class="section-title"><h2>Lapse, renewal &amp; out-of-sequence processing</h2><span class="sub">Special handling rules that keep the lifecycle consistent</span></div>
+      <div class="info-grid">
+        <div class="infobox">
+          <h4>⏱️ Lapse functionality (Renewal &amp; Reinstatement)</h4>
+          <p>If a renewal offer is not accepted, or premium is not received, by the term expiration date, the policy moves to a <b style="color:#eef5ff">Lapsed</b> state rather than immediately cancelling — preserving continuity for a defined grace window.</p>
+          <ol>
+            <li>Renewal generated N days before expiration and monitored for acceptance/payment.</li>
+            <li>No response by expiration → status set to <i>Lapsed</i>; coverage suspended, grace period starts.</li>
+            <li>Reinstatement request within grace window re-validates eligibility, risk changes and outstanding balance.</li>
+            <li>Approved reinstatement restores continuous coverage; effective-dated back to lapse date or resumes prospectively per rule.</li>
+            <li>Beyond grace window, lapsed policy is closed and requires new business submission.</li>
+          </ol>
+        </div>
+        <div class="infobox">
+          <h4>🔀 Out-of-sequence (OOS) transaction processing</h4>
+          <p>Occurs when a transaction is entered with an effective date earlier than another transaction already processed on the policy (e.g. a backdated endorsement after a renewal has already run).</p>
+          <ol>
+            <li>System detects the effective-date conflict against the transaction history / financial ledger.</li>
+            <li>Policy is flagged for OOS review; automatic premium and document recalculation is attempted.</li>
+            <li>Downstream transactions (renewal, billing, endorsements) are re-sequenced and re-rated as needed.</li>
+            <li>Admin/underwriter reviews recalculated deltas, approves financial adjustments and reissues affected documents.</li>
+            <li>Audit trail captures original sequence, conflict, and resolution for full traceability.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="section-title"><h2>Audit trail</h2><span class="sub">Every lifecycle activity is logged against the policy, actor, persona and timestamp</span></div>
+      <div class="audit-wrap">
+        <table class="audit">
+          <thead><tr><th>Timestamp</th><th>Policy</th><th>Activity</th><th>Persona</th><th>Actor</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>2026-01-04 09:12</td><td>POL-88213</td><td>Submission created</td><td>Agent</td><td>J. Alvarez</td><td>Success</td></tr>
+            <tr><td>2026-01-04 09:40</td><td>POL-88213</td><td>Quote generated</td><td>System / Rating</td><td>Rating Engine</td><td>Success</td></tr>
+            <tr><td>2026-01-05 11:02</td><td>POL-88213</td><td>Quote revised — coverage change</td><td>Agent</td><td>J. Alvarez</td><td>Success</td></tr>
+            <tr><td>2026-01-05 11:30</td><td>POL-88213</td><td>Referred to underwriting — risk score</td><td>System</td><td>Referral Engine</td><td>Referred</td></tr>
+            <tr><td>2026-01-06 14:18</td><td>POL-88213</td><td>Referral approved with condition</td><td>Underwriter</td><td>M. Chen</td><td>Approved</td></tr>
+            <tr><td>2026-01-07 10:05</td><td>POL-88213</td><td>Bound</td><td>Agent</td><td>J. Alvarez</td><td>Success</td></tr>
+            <tr><td>2026-01-08 08:47</td><td>POL-88213</td><td>Issued — policy number assigned</td><td>System</td><td>Policy Admin</td><td>Success</td></tr>
+            <tr><td>2026-06-20 16:02</td><td>POL-77410</td><td>Renewal offer generated</td><td>System</td><td>Renewal Batch</td><td>Success</td></tr>
+            <tr><td>2026-07-21 00:00</td><td>POL-77410</td><td>No renewal response — policy lapsed</td><td>System</td><td>Lapse Batch</td><td>Lapsed</td></tr>
+            <tr><td>2026-07-30 13:44</td><td>POL-77410</td><td>Reinstatement requested</td><td>Customer</td><td>Self-service Portal</td><td>Pending</td></tr>
+            <tr><td>2026-07-31 09:15</td><td>POL-77410</td><td>Reinstatement approved</td><td>Admin</td><td>R. Osei</td><td>Reinstated</td></tr>
+            <tr><td>2026-08-02 12:30</td><td>POL-91100</td><td>Out-of-sequence endorsement detected</td><td>System</td><td>OOS Monitor</td><td>Flagged</td></tr>
+            <tr><td>2026-08-03 15:11</td><td>POL-91100</td><td>OOS recalculation reviewed &amp; approved</td><td>Admin</td><td>R. Osei</td><td>Resolved</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="wrap policy-page" id="page-ui-billing">
+      <header>
+        <div class="crumb">User Interface</div>
+        <h1>Billing — Premium, Invoicing &amp; Payment Operations</h1>
+        <p>End-to-end billing flow from premium receipt through invoicing, instalments, payment allocation, disbursement, commissions and collections — with persona dashboards and full audit trail for the Billing domain.</p>
+      </header>
+
+      <div class="section-title"><h2>Billing flow</h2><span class="sub">Premium intake from Policy through invoicing, instalments, allocation, exceptions and downstream disbursement</span></div>
+      <div class="legend-row">
+        <span><i style="background:var(--p)"></i> Premium / invoicing</span>
+        <span><i style="background:var(--b)"></i> Payment processing</span>
+        <span><i style="background:var(--i)"></i> Allocation &amp; exceptions</span>
+        <span><i style="background:var(--c)"></i> Collections / non-pay</span>
+        <span><i style="background:var(--y)"></i> Commission / disbursement</span>
+        <span><i style="background:#59d8e8"></i> External integration call</span>
+        <span><i style="background:#cf91ff"></i> Document / packet generation</span>
+      </div>
+      <div class="flow-wrap">
+        <div class="lifecycle-flow">
+          <div class="stage new"><b>1 · Premium Receivable</b>Premium due received from Policy on bind/issue/endorsement</div>
+          <span class="arrow">➜</span>
+          <div class="stage new"><b>2 · Generate Invoice</b>Invoice created for premium, fees and taxes</div>
+          <span class="arrow">➜</span>
+          <div class="stage doc"><b>📄 Invoice Packet</b>Bill / statement document generated &amp; dispatched</div>
+          <span class="arrow">➜</span>
+          <div class="stage new"><b>3 · Create Instalments</b>Payment plan split — monthly / quarterly / EFT schedule</div>
+          <span class="arrow">➜</span>
+          <div class="stage sys"><b>🔗 Integration Call</b>Payment gateway, EFT/ACH processor, card network</div>
+          <span class="arrow">➜</span>
+          <div class="stage svc"><b>4 · Process Payment</b>Cash, card, ACH/EFT, check, wire captured</div>
+          <span class="arrow">➜</span>
+          <div class="stage rev"><b>5 · Allocate Payment</b>Applied to invoice/instalment per allocation rules</div>
+        </div>
+        <div class="lifecycle-flow" style="margin-top:14px">
+          <div class="stage rev"><b>Suspense</b>Unmatched / unidentified payment held pending match</div>
+          <span class="arrow">➜</span>
+          <div class="stage rev"><b>Write-off</b>Small balance / uncollectable amount written off</div>
+          <span class="arrow">➜</span>
+          <div class="stage y"><b>Overpayment</b>Credit balance identified on account</div>
+          <span class="arrow">➜</span>
+          <div class="stage y"><b>Disbursement</b>Refund / return of overpayment to payer</div>
+          <span class="arrow">➜</span>
+          <div class="stage y"><b>Commission Calc</b>Agent/broker commission computed on earned premium</div>
+          <span class="arrow">➜</span>
+          <div class="stage doc"><b>📄 Commission Statement</b>Commission statement generated for agent payout</div>
+          <span class="arrow">➜</span>
+          <div class="stage rev"><b>Void / Reverse</b>Payment voided or reversed (NSF, chargeback, error)</div>
+        </div>
+        <div class="lifecycle-flow" style="margin-top:14px">
+          <div class="stage sys"><b>🔁 Recurring — EFT</b>Scheduled bank draft on due date, auto-retry on fail</div>
+          <span class="arrow">➜</span>
+          <div class="stage sys"><b>🔁 Recurring — Card</b>Scheduled card charge, auto card-on-file update</div>
+          <span class="arrow">➜</span>
+          <div class="stage term"><b>Delinquency</b>Missed instalment ages into past-due status</div>
+          <span class="arrow">➜</span>
+          <div class="stage doc"><b>📄 Dunning Notice</b>Reminder / past-due letter generated</div>
+          <span class="arrow">➜</span>
+          <div class="stage term"><b>Collections</b>Escalated to collections workflow / agency</div>
+          <span class="arrow">➜</span>
+          <div class="stage term"><b>Non-Pay Cancellation</b>Policy flagged to Policy Admin for cancellation</div>
+          <span class="loop">⇄ Billing → Policy: delinquency &amp; payment status signals</span>
+        </div>
+        <div class="branch-note">Suspense, write-off, overpayment/disbursement and void/reverse are exception branches off the core Allocate Payment step. Delinquency status, payment status and non-payment cancellation indicators are continuously synchronised back to Policy Administration.</div>
+      </div>
+
+      <div class="section-title"><h2>Persona dashboards</h2><span class="sub">Same billing flow, tailored views per role</span></div>
+      <div class="persona-tabs" id="billingPersonaTabs">
+        <div class="persona-tab active" data-bpersona="csr"><span class="ic">🎧</span>Billing CSR</div>
+        <div class="persona-tab" data-bpersona="underwriter"><span class="ic">🧮</span>Underwriter</div>
+        <div class="persona-tab" data-bpersona="agent"><span class="ic">🧑‍💼</span>Agent</div>
+        <div class="persona-tab" data-bpersona="admin"><span class="ic">🛠️</span>Admin</div>
+        <div class="persona-tab" data-bpersona="customer"><span class="ic">🙋</span>Customer</div>
+        <div class="persona-tab" data-bpersona="management"><span class="ic">📊</span>Management</div>
+      </div>
+
+      <div class="widget-grid" id="billingPersonaWidgets">
+        <!-- csr -->
+        <div class="widget billing-persona-w" data-bpersona="csr"><h4>📞 Open cases</h4><ul>
+          <li><span>BILL-2210 — dispute on invoice</span><span class="pill warn">In progress</span></li>
+          <li><span>BILL-2231 — suspense match request</span><span class="pill info">New</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="csr"><h4>📌 My tasks</h4><ul>
+          <li><span>Apply suspense payment — POL-88213</span><span class="pill warn">Due today</span></li>
+          <li><span>Process refund request</span><span class="pill info">In progress</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="csr"><h4>🔔 Alerts</h4><ul>
+          <li><span>NSF / chargeback reversal ×2</span><span class="pill risk">Action needed</span></li>
+          <li><span>Overpayment awaiting disbursement</span><span class="pill warn">1 item</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="csr"><h4>📈 Queue performance</h4><ul>
+          <li><span>Avg. handle time</span><b>4.2 min</b></li>
+          <li><span>Same-day resolution</span><b>76%</b></li>
+        </ul></div>
+
+        <!-- underwriter -->
+        <div class="widget billing-persona-w" data-bpersona="underwriter" style="display:none"><h4>⚠️ Premium exceptions</h4><ul>
+          <li><span>Rate change pending re-bill</span><span class="pill warn">2 items</span></li>
+          <li><span>OOS premium recalculation</span><span class="pill risk">1 item</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="underwriter" style="display:none"><h4>📌 My tasks</h4><ul>
+          <li><span>Approve manual rate override billing</span><span class="pill warn">Due today</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="underwriter" style="display:none"><h4>🔔 Alerts</h4><ul>
+          <li><span>Endorsement premium variance flagged</span><span class="pill risk">1 item</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="underwriter" style="display:none"><h4>📊 Book billing health</h4><ul>
+          <li><span>Written premium (MTD)</span><b>$482K</b></li>
+          <li><span>Unbilled premium</span><b>$12.4K</b></li>
+        </ul></div>
+
+        <!-- agent -->
+        <div class="widget billing-persona-w" data-bpersona="agent" style="display:none"><h4>💰 Commission</h4><ul>
+          <li><span>Commission statement — Jan</span><span class="pill ok">Paid</span></li>
+          <li><span>Commission statement — Feb</span><span class="pill info">Pending</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="agent" style="display:none"><h4>📌 My tasks</h4><ul>
+          <li><span>Notify customer — instalment due</span><span class="pill warn">Due today</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="agent" style="display:none"><h4>🔔 Alerts</h4><ul>
+          <li><span>Client delinquency ×3</span><span class="pill risk">Action needed</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="agent" style="display:none"><h4>📈 Book billing</h4><ul>
+          <li><span>Collected premium (MTD)</span><b>$96.1K</b></li>
+          <li><span>Commission YTD</span><b>$8.9K</b></li>
+        </ul></div>
+
+        <!-- admin -->
+        <div class="widget billing-persona-w" data-bpersona="admin" style="display:none"><h4>⚙️ System queues</h4><ul>
+          <li><span>Suspense unmatched items</span><span class="pill info">14</span></li>
+          <li><span>Write-off approvals pending</span><span class="pill warn">3</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="admin" style="display:none"><h4>📌 My tasks</h4><ul>
+          <li><span>Approve write-off batch</span><span class="pill warn">Due today</span></li>
+          <li><span>Reconcile gateway settlement file</span><span class="pill info">Scheduled</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="admin" style="display:none"><h4>🔔 Alerts</h4><ul>
+          <li><span>Recurring EFT batch failure</span><span class="pill risk">Error</span></li>
+          <li><span>Allocation rule conflict</span><span class="pill warn">Review</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="admin" style="display:none"><h4>🧰 Reconciliation</h4><ul>
+          <li><span>Open exceptions</span><b>9</b></li>
+          <li><span>Auto-matched (24h)</span><b>412</b></li>
+        </ul></div>
+
+        <!-- customer -->
+        <div class="widget billing-persona-w" data-bpersona="customer" style="display:none"><h4>🧾 My invoice</h4><ul>
+          <li><span>Invoice INV-33012</span><span class="pill warn">Due in 5 days</span></li>
+          <li><span>Amount due</span><b>$142.00</b></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="customer" style="display:none"><h4>📌 Action items</h4><ul>
+          <li><span>Update card on file</span><span class="pill info">Requested</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="customer" style="display:none"><h4>🔔 Notices</h4><ul>
+          <li><span>Payment past due — dunning notice sent</span><span class="pill risk">Action needed</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="customer" style="display:none"><h4>💳 Payment history</h4><ul>
+          <li><span>Last payment</span><b>$142.00 on 03 Feb</b></li>
+        </ul></div>
+
+        <!-- management -->
+        <div class="widget billing-persona-w" data-bpersona="management" style="display:none"><h4>📊 Billing KPIs</h4><ul>
+          <li><span>Collected premium (MTD)</span><b>$4.8M</b></li>
+          <li><span>Delinquency rate</span><b>4.6%</b></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="management" style="display:none"><h4>⚠️ Risk &amp; exceptions</h4><ul>
+          <li><span>Non-pay cancellations (rolling 30d)</span><b>62</b></li>
+          <li><span>Write-off amount (MTD)</span><b>$3.1K</b></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="management" style="display:none"><h4>🔔 Escalations</h4><ul>
+          <li><span>Collections escalations this week</span><span class="pill risk">8</span></li>
+        </ul></div>
+        <div class="widget billing-persona-w" data-bpersona="management" style="display:none"><h4>🕒 Cycle times</h4><ul>
+          <li><span>Invoice → Payment</span><b>6.8 days</b></li>
+          <li><span>Delinquency → Cancellation</span><b>28 days</b></li>
+        </ul></div>
+      </div>
+
+      <div class="section-title"><h2>Allocation rules, suspense &amp; delinquency handling</h2><span class="sub">How payments are matched, exceptions resolved and non-pay signals reach Policy</span></div>
+      <div class="info-grid">
+        <div class="infobox">
+          <h4>📐 Payment allocation rules</h4>
+          <p>Incoming payments are matched and applied automatically using a configurable priority order, with manual override available to CSR/Admin personas.</p>
+          <ol>
+            <li>Match payment to invoice/instalment using policy, account or remittance reference.</li>
+            <li>Apply in priority order: fees &amp; taxes → oldest earned premium → current instalment → future instalment.</li>
+            <li>Unmatched or partial-reference payments are routed to <b style="color:#eef5ff">Suspense</b> pending identification.</li>
+            <li>Residual small-balance amounts beyond tolerance threshold are routed for <b style="color:#eef5ff">Write-off</b> approval.</li>
+            <li>Credit balances trigger overpayment review and, once approved, a <b style="color:#eef5ff">Disbursement</b> refund.</li>
+          </ol>
+        </div>
+        <div class="infobox">
+          <h4>📉 Delinquency, payment status &amp; non-pay cancellation</h4>
+          <p>Billing continuously publishes account status back to Policy Administration so coverage decisions stay in sync with payment reality.</p>
+          <ol>
+            <li>Missed instalment ages the account into <i>Past Due</i>, then <i>Delinquent</i> per configurable grace days.</li>
+            <li>Payment status (Current / Past Due / Delinquent / Written-off) is synced to Policy on every change.</li>
+            <li>Dunning notices generated and dispatched at configured delinquency milestones.</li>
+            <li>Unresolved delinquency triggers a non-payment cancellation indicator sent to Policy Administration.</li>
+            <li>Payment received before the cancellation effective date clears the indicator and halts cancellation.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="section-title"><h2>Integration calls &amp; document generation</h2><span class="sub">External systems and generated artefacts across the billing flow</span></div>
+      <div class="info-grid">
+        <div class="infobox">
+          <h4>🔗 External integration calls</h4>
+          <ul>
+            <li>Payment gateway / processor — card authorisation &amp; capture</li>
+            <li>EFT / ACH network — bank draft submission &amp; settlement file</li>
+            <li>Lockbox / remittance file import — check &amp; wire matching</li>
+            <li>Collections agency interface — delinquent account referral</li>
+            <li>GL / Finance posting — premium, cash and commission entries</li>
+            <li>Fraud / chargeback network — dispute &amp; reversal notifications</li>
+          </ul>
+        </div>
+        <div class="infobox">
+          <h4>📄 Generated documents</h4>
+          <ul>
+            <li>Invoice / billing statement packet</li>
+            <li>Instalment schedule confirmation</li>
+            <li>Payment receipt / confirmation</li>
+            <li>Dunning / past-due notice letter</li>
+            <li>Commission statement (agent/broker payout)</li>
+            <li>Refund / disbursement confirmation letter</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section-title"><h2>Audit trail</h2><span class="sub">Every billing activity is logged against the account, actor, persona and timestamp</span></div>
+      <div class="audit-wrap">
+        <table class="audit">
+          <thead><tr><th>Timestamp</th><th>Account / Policy</th><th>Activity</th><th>Persona</th><th>Actor</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>2026-01-08 09:00</td><td>POL-88213</td><td>Invoice generated — new business premium</td><td>System</td><td>Billing Batch</td><td>Success</td></tr>
+            <tr><td>2026-01-08 09:02</td><td>POL-88213</td><td>Instalment plan created — monthly EFT</td><td>Agent</td><td>J. Alvarez</td><td>Success</td></tr>
+            <tr><td>2026-02-08 06:00</td><td>POL-88213</td><td>Recurring EFT draft attempted</td><td>System</td><td>Payment Processor</td><td>Success</td></tr>
+            <tr><td>2026-02-15 10:20</td><td>POL-77410</td><td>Payment received — unmatched reference</td><td>System</td><td>Lockbox Import</td><td>Suspense</td></tr>
+            <tr><td>2026-02-16 09:12</td><td>POL-77410</td><td>Suspense payment matched &amp; allocated</td><td>Billing CSR</td><td>T. Nguyen</td><td>Allocated</td></tr>
+            <tr><td>2026-03-02 08:00</td><td>POL-77410</td><td>Instalment missed — account past due</td><td>System</td><td>Delinquency Batch</td><td>Past Due</td></tr>
+            <tr><td>2026-03-10 08:00</td><td>POL-77410</td><td>Dunning notice generated &amp; sent</td><td>System</td><td>Document Batch</td><td>Success</td></tr>
+            <tr><td>2026-03-25 08:00</td><td>POL-77410</td><td>Non-payment cancellation indicator sent to Policy</td><td>System</td><td>Billing Engine</td><td>Flagged</td></tr>
+            <tr><td>2026-04-02 13:45</td><td>POL-91055</td><td>Overpayment identified on account</td><td>Billing CSR</td><td>T. Nguyen</td><td>Credit</td></tr>
+            <tr><td>2026-04-03 09:30</td><td>POL-91055</td><td>Disbursement / refund approved</td><td>Admin</td><td>R. Osei</td><td>Disbursed</td></tr>
+            <tr><td>2026-04-30 17:00</td><td>AGT-2201</td><td>Commission statement generated</td><td>System</td><td>Commission Batch</td><td>Success</td></tr>
+            <tr><td>2026-05-05 11:10</td><td>POL-88300</td><td>Card payment reversed — chargeback</td><td>System</td><td>Card Network</td><td>Reversed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="wrap policy-page" id="page-forms-policy">
+      <header>
+        <div class="crumb">Forms</div>
+        <h1>Forms Engine — Template to Distribution &amp; DMS</h1>
+        <p>Shared, reusable Forms Engine that turns a source template (DOCX, PDF or other format) into a customer-confirmed output, then stores, emails, publishes for print and files it into the Document Management System. Reached here via Forms → Policy, but this is the <b style="color:#eef5ff">same engine used by every module</b> — Billing, Claims, Portal and beyond.</p>
+      </header>
+
+      <div class="section-title"><h2>Forms generation flow</h2><span class="sub">Source template through data merge, external integration, output rendering and multi-channel distribution</span></div>
+      <div class="legend-row">
+        <span><i style="background:var(--p)"></i> Template &amp; source document</span>
+        <span><i style="background:var(--i)"></i> Data collection &amp; processing</span>
+        <span><i style="background:#cf91ff"></i> Output / document generation</span>
+        <span><i style="background:var(--b)"></i> Distribution channel</span>
+        <span><i style="background:var(--c)"></i> Physical print</span>
+        <span><i style="background:var(--y)"></i> Document Management System</span>
+        <span><i style="background:#59d8e8"></i> External integration call</span>
+      </div>
+      <div class="flow-wrap">
+        <div class="lifecycle-flow">
+          <div class="stage new"><b>1 · Source Document</b>Template authored in DOCX, PDF or other known format</div>
+          <span class="arrow">➜</span>
+          <div class="stage rev"><b>2 · Template Authoring</b>Insert dynamic placeholders / merge fields into template</div>
+          <span class="arrow">➜</span>
+          <div class="stage sys"><b>3 · Data Collection</b>Pull dynamic data from Policy, Billing, Claims &amp; Party</div>
+          <span class="arrow">➜</span>
+          <div class="stage svc"><b>4 · Forms Engine Processing</b>Merge template + data, apply rules &amp; conditional content</div>
+          <span class="arrow">➜</span>
+          <div class="stage sys"><b>🔗 External API Call</b>Push forms/data payload to third-party integration</div>
+          <span class="arrow">➜</span>
+          <div class="stage doc"><b>5 · Output Generation</b>Customer-confirmed rendered output (PDF / HTML / print-ready)</div>
+        </div>
+        <div class="lifecycle-flow" style="margin-top:14px">
+          <div class="stage doc"><b>Output Generation</b>Rendered document ready for distribution</div>
+          <span class="arrow">➜</span>
+          <div class="stage svc"><b>Store in DB</b>Persisted to document repository with metadata</div>
+          <span class="arrow">➜</span>
+          <div class="stage svc"><b>Send via Email</b>Dispatched to customer / agent mailbox</div>
+          <span class="arrow">➜</span>
+          <div class="stage svc"><b>Upload to Shared Folder</b>Published to network / cloud shared location</div>
+          <span class="arrow">➜</span>
+          <div class="stage term"><b>Print Process</b>Pulls from shared folder → physically printed &amp; mailed</div>
+        </div>
+        <div class="lifecycle-flow" style="margin-top:14px">
+          <div class="stage y"><b>📚 DMS Indexing</b>Document classified &amp; indexed with policy/account metadata</div>
+          <span class="arrow">➜</span>
+          <div class="stage y"><b>📚 Versioning &amp; Retention</b>Version history retained per retention policy</div>
+          <span class="arrow">➜</span>
+          <div class="stage y"><b>📚 Search &amp; Retrieval</b>Self-service, CSR and audit lookup of stored documents</div>
+          <span class="loop">⇄ Feeds back into Store in DB step for every generated document</span>
+        </div>
+        <div class="branch-note">Every document produced by Output Generation is simultaneously stored, emailed, published for print and indexed into the Document Management System — the same engine and flow apply whether triggered from Policy, Billing, Claims or Portal.</div>
+      </div>
+
+      <div class="section-title"><h2>Document Management System &amp; external integration</h2><span class="sub">How generated forms are governed, retrieved and shared outside the platform</span></div>
+      <div class="info-grid">
+        <div class="infobox">
+          <h4>🗄️ Document Management System (DMS) considerations</h4>
+          <ol>
+            <li>Every generated document is indexed with policy/account, form type, effective date and persona/actor metadata.</li>
+            <li>Version history is preserved for reissued or corrected documents, with full lineage back to the original template.</li>
+            <li>Retention and disposition rules apply per document type and regulatory requirement.</li>
+            <li>Documents are searchable and retrievable by CSR, underwriting, customer self-service and audit functions.</li>
+            <li>Access is governed by role-based permissions and full retrieval activity is logged for audit.</li>
+          </ol>
+        </div>
+        <div class="infobox">
+          <h4>🔗 External API / third-party integration</h4>
+          <ol>
+            <li>Forms Engine exposes an external API call at processing time to pass form data/content to third-party systems.</li>
+            <li>Used for e-signature providers, regulatory filing services, state reporting and partner document exchanges.</li>
+            <li>Payload includes merged field data, document reference/ID and callback status endpoint.</li>
+            <li>Third-party response (accepted / signed / rejected) is written back into the forms audit trail.</li>
+            <li>Failures are retried with backoff and surfaced as alerts to the Admin persona.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="section-title"><h2>One engine, every module</h2><span class="sub">The same Forms Engine flow is reused across all domains</span></div>
+      <div class="widget-grid">
+        <div class="widget"><h4>📄 Policy</h4><ul>
+          <li><span>Declarations &amp; policy packet</span><span class="pill ok">Active</span></li>
+          <li><span>Endorsement / renewal notices</span><span class="pill ok">Active</span></li>
+        </ul></div>
+        <div class="widget"><h4>💳 Billing</h4><ul>
+          <li><span>Invoice &amp; dunning letters</span><span class="pill ok">Active</span></li>
+          <li><span>Commission statements</span><span class="pill ok">Active</span></li>
+        </ul></div>
+        <div class="widget"><h4>🧾 Claims</h4><ul>
+          <li><span>Reservation of rights letters</span><span class="pill ok">Active</span></li>
+          <li><span>Settlement / denial letters</span><span class="pill ok">Active</span></li>
+        </ul></div>
+        <div class="widget"><h4>🌐 Portal</h4><ul>
+          <li><span>Self-service ID cards</span><span class="pill ok">Active</span></li>
+          <li><span>On-demand statements</span><span class="pill ok">Active</span></li>
+        </ul></div>
+      </div>
+
+      <div class="section-title"><h2>Audit trail</h2><span class="sub">Every forms generation and distribution event is logged against document, actor and channel</span></div>
+      <div class="audit-wrap">
+        <table class="audit">
+          <thead><tr><th>Timestamp</th><th>Document / Ref</th><th>Activity</th><th>Module</th><th>Actor</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>2026-01-08 08:50</td><td>DOC-55021</td><td>Template selected — policy issue packet</td><td>Policy</td><td>System</td><td>Success</td></tr>
+            <tr><td>2026-01-08 08:51</td><td>DOC-55021</td><td>Dynamic data collected from Policy &amp; Party</td><td>Policy</td><td>Forms Engine</td><td>Success</td></tr>
+            <tr><td>2026-01-08 08:52</td><td>DOC-55021</td><td>External API call — e-signature provider</td><td>Policy</td><td>Forms Engine</td><td>Sent</td></tr>
+            <tr><td>2026-01-08 08:53</td><td>DOC-55021</td><td>Output generated — customer-confirmed PDF</td><td>Policy</td><td>Forms Engine</td><td>Success</td></tr>
+            <tr><td>2026-01-08 08:53</td><td>DOC-55021</td><td>Stored in DB &amp; indexed in DMS</td><td>Policy</td><td>Forms Engine</td><td>Success</td></tr>
+            <tr><td>2026-01-08 08:54</td><td>DOC-55021</td><td>Sent via email to customer</td><td>Policy</td><td>Forms Engine</td><td>Delivered</td></tr>
+            <tr><td>2026-01-08 08:54</td><td>DOC-55021</td><td>Uploaded to shared print folder</td><td>Policy</td><td>Forms Engine</td><td>Success</td></tr>
+            <tr><td>2026-01-09 03:10</td><td>DOC-55021</td><td>Pulled by print process — physically printed</td><td>Policy</td><td>Print Batch</td><td>Printed</td></tr>
+            <tr><td>2026-02-14 12:05</td><td>DOC-66102</td><td>Reissue — corrected commission statement</td><td>Billing</td><td>Admin</td><td>Success</td></tr>
+            <tr><td>2026-03-01 09:22</td><td>DOC-71230</td><td>Retrieved from DMS — audit request</td><td>Claims</td><td>Compliance</td><td>Retrieved</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="wrap policy-page" id="page-entdata-policy">
+      <header>
+        <div class="crumb">Enterprise Data and Downstream</div>
+        <h1>Policy — Data Flow to Downstream &amp; Management Reporting</h1>
+        <p>Real-time data platform that continuously collects Policy, Billing and Claims events and exposes them as governed data products for analytics, actuarial, finance and persona-based management reporting.</p>
+      </header>
+
+      <div class="section-title"><h2>Data flow to downstream</h2><span class="sub">Source modules through real-time capture, processing and consumption by downstream &amp; reporting systems</span></div>
+      <div class="legend-row">
+        <span><i style="background:var(--p)"></i> Source module (system of record)</span>
+        <span><i style="background:#59d8e8"></i> Real-time capture / integration</span>
+        <span><i style="background:var(--i)"></i> Processing &amp; data platform</span>
+        <span><i style="background:var(--y)"></i> Governed data products</span>
+        <span><i style="background:var(--b)"></i> Reporting &amp; consumption</span>
+      </div>
+      <div class="flow-wrap">
+        <div class="lifecycle-flow">
+          <div class="stage new"><b>Policy Admin</b>Submission, quote, bind, issue, endorsement, renewal events</div>
+          <span class="arrow">➜</span>
+          <div class="stage sys"><b>🔗 CDC / Event Stream</b>Change-data-capture &amp; domain events published in real time</div>
+          <span class="arrow">➜</span>
+          <div class="stage rev"><b>Operational Data Store</b>Cross-domain near-real-time operational view</div>
+        </div>
+        <div class="lifecycle-flow" style="margin-top:14px">
+          <div class="stage new"><b>Billing</b>Invoice, payment, delinquency, commission events</div>
+          <span class="arrow">➜</span>
+          <div class="stage sys"><b>🔗 CDC / Event Stream</b>Real-time billing ledger &amp; status changes</div>
+          <span class="arrow">➜</span>
+          <div class="stage rev"><b>Stream Processing</b>Enrichment, dedupe, party/policy correlation</div>
+        </div>
+        <div class="lifecycle-flow" style="margin-top:14px">
+          <div class="stage new"><b>Claims</b>FNOL, reserve, payment, recovery, closure events</div>
+          <span class="arrow">➜</span>
+          <div class="stage sys"><b>🔗 CDC / Event Stream</b>Real-time claims transaction feed</div>
+          <span class="arrow">➜</span>
+          <div class="stage rev"><b>Data Lake / Warehouse</b>Curated, conformed, historised data products</div>
+          <span class="arrow">➜</span>
+          <div class="stage y"><b>Semantic / Reporting Layer</b>Subject-area models — policy, billing, claims, party</div>
+          <span class="arrow">➜</span>
+          <div class="stage svc"><b>Management Reporting</b>Persona dashboards, BI, actuarial &amp; regulatory feeds</div>
+        </div>
+        <div class="branch-note">Policy, Billing and Claims all stream continuously into the same real-time data platform; the semantic layer joins them by policy, account, claim and party ID so every persona report reflects a single, consistent, near-real-time view.</div>
+      </div>
+
+      <div class="section-title"><h2>Persona-based policy reports</h2><span class="sub">Same underlying data, tailored reporting view per role</span></div>
+      <div class="persona-tabs" id="entdataPersonaTabs">
+        <div class="persona-tab active" data-epersona="underwriter"><span class="ic">🧮</span>Underwriter</div>
+        <div class="persona-tab" data-epersona="agent"><span class="ic">🧑‍💼</span>Agent</div>
+        <div class="persona-tab" data-epersona="admin"><span class="ic">🛠️</span>Admin</div>
+        <div class="persona-tab" data-epersona="customer"><span class="ic">🙋</span>Customer</div>
+        <div class="persona-tab" data-epersona="management"><span class="ic">📊</span>Management</div>
+      </div>
+
+      <div class="widget-grid" id="entdataPersonaWidgets">
+        <!-- underwriter -->
+        <div class="widget entdata-persona-w" data-epersona="underwriter"><h4>📊 Underwriting reports</h4><ul>
+          <li><span>Referral aging report</span><span class="pill warn">Daily</span></li>
+          <li><span>Loss ratio by segment</span><span class="pill info">Weekly</span></li>
+          <li><span>Rate deviation exceptions</span><span class="pill risk">Real time</span></li>
+        </ul></div>
+
+        <!-- agent -->
+        <div class="widget entdata-persona-w" data-epersona="agent" style="display:none"><h4>📊 Book-of-business reports</h4><ul>
+          <li><span>Renewal pipeline report</span><span class="pill info">Daily</span></li>
+          <li><span>Retention by product</span><span class="pill ok">Weekly</span></li>
+          <li><span>Commission earnings summary</span><span class="pill info">Monthly</span></li>
+        </ul></div>
+
+        <!-- admin -->
+        <div class="widget entdata-persona-w" data-epersona="admin" style="display:none"><h4>📊 Operations reports</h4><ul>
+          <li><span>Out-of-sequence backlog report</span><span class="pill warn">Real time</span></li>
+          <li><span>Document generation failures</span><span class="pill risk">Real time</span></li>
+          <li><span>Data quality exception report</span><span class="pill info">Daily</span></li>
+        </ul></div>
+
+        <!-- customer -->
+        <div class="widget entdata-persona-w" data-epersona="customer" style="display:none"><h4>📊 My policy insights</h4><ul>
+          <li><span>Policy summary &amp; coverage report</span><span class="pill ok">On demand</span></li>
+          <li><span>Payment &amp; billing history</span><span class="pill ok">On demand</span></li>
+        </ul></div>
+
+        <!-- management -->
+        <div class="widget entdata-persona-w" data-epersona="management" style="display:none"><h4>📊 Executive KPI dashboard</h4><ul>
+          <li><span>Policies in force / growth</span><span class="pill ok">Real time</span></li>
+          <li><span>Combined ratio trend</span><span class="pill info">Weekly</span></li>
+          <li><span>Delinquency &amp; lapse rate</span><span class="pill warn">Daily</span></li>
+          <li><span>Claims severity &amp; frequency</span><span class="pill info">Weekly</span></li>
+        </ul></div>
+      </div>
+
+      <div class="section-title"><h2>Real-time data management</h2><span class="sub">How Policy, Billing and Claims data is unified for reporting</span></div>
+      <div class="info-grid">
+        <div class="infobox">
+          <h4>⚡ Real-time collection &amp; integration</h4>
+          <ol>
+            <li>Policy, Billing and Claims each publish domain events / CDC streams as transactions occur.</li>
+            <li>Events are correlated by policy, account, claim and party ID as they land in the data platform.</li>
+            <li>Operational Data Store provides a near-real-time cross-domain view for operational reporting.</li>
+            <li>Data Lake / Warehouse curates and historises the same data for trend, actuarial and regulatory reporting.</li>
+          </ol>
+        </div>
+        <div class="infobox">
+          <h4>📈 Management-level reporting</h4>
+          <ol>
+            <li>Semantic layer exposes subject-area models (policy, billing, claims, party) to BI &amp; reporting tools.</li>
+            <li>Persona-based dashboards apply role-based filters and access controls over the same governed data.</li>
+            <li>Management dashboards blend all three modules — growth, loss ratio, delinquency and claims trends.</li>
+            <li>All downstream reports remain point-in-time consistent and fully auditable back to source events.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+
+
+
+<script>
+/* ---------- Sidebar collapse ---------- */
+const sidebar=document.getElementById('sidebar');
+document.getElementById('sideToggle').onclick=()=>sidebar.classList.toggle('collapsed');
+
+/* ---------- Accordion groups ---------- */
+document.querySelectorAll('.nav-item.parent').forEach(p=>{
+  p.addEventListener('click',()=>{
+    if(sidebar.classList.contains('collapsed')) sidebar.classList.remove('collapsed');
+    const sub=document.querySelector(`.nav-sub[data-parent="${p.dataset.group}"]`);
+    p.classList.toggle('open');
+    sub.classList.toggle('open');
+  });
+});
+
+/* ---------- Page switching ---------- */
+const pageArch=document.getElementById('page-architecture'),pagePlaceholder=document.getElementById('page-placeholder'),pageUiPolicy=document.getElementById('page-ui-policy'),pageUiBilling=document.getElementById('page-ui-billing'),pageFormsPolicy=document.getElementById('page-forms-policy'),pageEntdataPolicy=document.getElementById('page-entdata-policy'),placeTitle=document.getElementById('placeTitle'),placeDesc=document.getElementById('placeDesc'),placeCrumb=document.getElementById('placeCrumb'),navItems=[...document.querySelectorAll('.nav-item[data-page]')];
+const allPages=[pageArch,pagePlaceholder,pageUiPolicy,pageUiBilling,pageFormsPolicy,pageEntdataPolicy];
+function showPage(el){allPages.forEach(p=>p.style.display=(p===el?'flex':'none'))}
+
+navItems.forEach(item=>{
+  item.addEventListener('click',()=>{
+    navItems.forEach(i=>i.classList.remove('active'));
+    item.classList.add('active');
+    const page=item.dataset.page,label=item.dataset.label||item.textContent.trim();
+    if(page==='architecture'){
+      showPage(pageArch);
+    }else if(page==='ui-policy'){
+      showPage(pageUiPolicy);
+    }else if(page==='ui-billing'){
+      showPage(pageUiBilling);
+    }else if(page==='forms-policy'){
+      showPage(pageFormsPolicy);
+    }else if(page==='entdata-policy'){
+      showPage(pageEntdataPolicy);
+    }else{
+
+      showPage(pagePlaceholder);
+
+      const parts=label.split('—').map(s=>s.trim());
+      placeCrumb.textContent=parts[0]||'Section';
+      placeTitle.textContent=label;
+      placeDesc.textContent=`Placeholder content for "${label}". Wire this up to the real ${parts[1]||''} experience.`;
+    }
+  });
+});
+
+
+/* ---------- Persona dashboard tabs (Policy UI page) ---------- */
+const personaTabsPolicy=[...document.querySelectorAll('#personaTabs .persona-tab')],personaWidgets=[...document.querySelectorAll('.persona-w')];
+personaTabsPolicy.forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    personaTabsPolicy.forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const persona=tab.dataset.persona;
+    personaWidgets.forEach(w=>{w.style.display=(w.dataset.persona===persona?'':'none')});
+  });
+});
+
+/* ---------- Persona dashboard tabs (Billing UI page) ---------- */
+const billingPersonaTabs=[...document.querySelectorAll('#billingPersonaTabs .persona-tab')],billingPersonaWidgets=[...document.querySelectorAll('.billing-persona-w')];
+billingPersonaTabs.forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    billingPersonaTabs.forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const persona=tab.dataset.bpersona;
+    billingPersonaWidgets.forEach(w=>{w.style.display=(w.dataset.bpersona===persona?'':'none')});
+  });
+});
+
+/* ---------- Persona dashboard tabs (Enterprise Data & Downstream — Policy page) ---------- */
+const entdataPersonaTabs=[...document.querySelectorAll('#entdataPersonaTabs .persona-tab')],entdataPersonaWidgets=[...document.querySelectorAll('.entdata-persona-w')];
+entdataPersonaTabs.forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    entdataPersonaTabs.forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const persona=tab.dataset.epersona;
+    entdataPersonaWidgets.forEach(w=>{w.style.display=(w.dataset.epersona===persona?'':'none')});
+  });
+});
+
+
+
+
+/* ---------- Diagram interactivity (Architecture Diagram page) ---------- */
+const B=[...document.querySelectorAll('[data-f]')],L=[...document.querySelectorAll('.l')],N=[...document.querySelectorAll('[data-m]')];
+function F(m){B.forEach(b=>b.classList.toggle('active',b.dataset.f===m));L.forEach(l=>l.classList.toggle('hot',m==='all'||l.classList.contains(m)));N.forEach(n=>n.classList.toggle('focus',n.dataset.m===m))}
+B.forEach(b=>b.onclick=()=>F(b.dataset.f));N.forEach(n=>n.onclick=()=>F(n.dataset.m));
+document.getElementById('anim').onclick=e=>{e.target.classList.toggle('active');L.forEach(l=>l.classList.toggle('flow'))};
+F('all');
+
+const viewport=document.querySelector('.scroll'),canvas=document.querySelector('.canvas'),read=document.getElementById('zoomRead');
+let scale=1,drag=false,sx=0,sy=0,startL=0,startT=0,pointers=new Map(),pinchDistance=0,pinchScale=1;
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+function apply(){canvas.style.transform=`scale(${scale})`;read.textContent=`${Math.round(scale*100)}%`}
+function zoomAt(next,cx,cy){next=clamp(next,.25,3);const rect=viewport.getBoundingClientRect(),x=cx-rect.left,y=cy-rect.top,wx=(viewport.scrollLeft+x)/scale,wy=(viewport.scrollTop+y)/scale;scale=next;apply();viewport.scrollLeft=wx*scale-x;viewport.scrollTop=wy*scale-y}
+function fit(){const r=viewport.getBoundingClientRect();scale=clamp(r.width/1180,.25,3);apply();viewport.scrollLeft=0;viewport.scrollTop=0}
+function reset(){scale=1;apply();viewport.scrollLeft=0;viewport.scrollTop=0}
+viewport.addEventListener('wheel',e=>{if(!(e.ctrlKey||e.metaKey))return;e.preventDefault();zoomAt(scale*Math.exp(-e.deltaY*.0015),e.clientX,e.clientY)},{passive:false});
+viewport.addEventListener('pointerdown',e=>{if(e.target.closest('button,.n'))return;viewport.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){drag=true;sx=e.clientX;sy=e.clientY;startL=viewport.scrollLeft;startT=viewport.scrollTop;viewport.classList.add('dragging')}else if(pointers.size===2){const a=[...pointers.values()];pinchDistance=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);pinchScale=scale}});
+viewport.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2){const a=[...pointers.values()],d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),cx=(a[0].x+a[1].x)/2,cy=(a[0].y+a[1].y)/2;zoomAt(pinchScale*d/pinchDistance,cx,cy)}else if(drag){viewport.scrollLeft=startL-(e.clientX-sx);viewport.scrollTop=startT-(e.clientY-sy)}});
+function end(e){pointers.delete(e.pointerId);if(!pointers.size){drag=false;viewport.classList.remove('dragging')}}
+viewport.addEventListener('pointerup',end);viewport.addEventListener('pointercancel',end);viewport.addEventListener('dblclick',fit);
+document.getElementById('zoomIn').onclick=()=>zoomAt(scale*1.2,innerWidth/2,innerHeight/2);
+document.getElementById('zoomOut').onclick=()=>zoomAt(scale/1.2,innerWidth/2,innerHeight/2);
+document.getElementById('fit').onclick=fit;document.getElementById('fitHud').onclick=fit;
+document.getElementById('resetView').onclick=reset;document.getElementById('actual').onclick=reset;
+addEventListener('resize',fit);
+addEventListener('keydown',e=>{if(e.key==='+'||e.key==='=')document.getElementById('zoomIn').click();if(e.key==='-')document.getElementById('zoomOut').click();if(e.key==='0')fit()});
+requestAnimationFrame(fit);
+</script>
+</body></html>

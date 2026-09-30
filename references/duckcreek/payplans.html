@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Billing Pay Plans — Complete Skill &amp; Reference (Safepoint / Cajun / Manatee)</title>
+<style>
+  :root {
+    --navy: #0b2545;
+    --navy-2: #13315c;
+    --blue: #1d4e89;
+    --teal: #2a9d8f;
+    --cyan: #3a86ff;
+    --sky: #e6f0fb;
+    --panel: #f4f8fd;
+    --white: #ffffff;
+    --gold: #d4a017;
+    --gold-2: #b8860b;
+    --gold-soft: #fff5d6;
+    --gold-border: #e0b542;
+    --text: #1a2540;
+    --muted: #556484;
+    --border: #cfd8e6;
+    --danger: #b03a3a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    background: var(--panel);
+    line-height: 1.5;
+    font-size: 14px;
+  }
+  a { color: var(--teal); text-decoration: none; }
+  a:hover { color: var(--cyan); text-decoration: underline; }
+
+  /* Layout */
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 300px;
+    background: var(--navy);
+    color: #dbe4f2;
+    padding: 20px 16px;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 3px solid var(--gold);
+  }
+  .sidebar h2 {
+    color: var(--gold);
+    font-size: 15px;
+    margin: 0 0 10px 0;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--navy-2);
+    padding-bottom: 8px;
+  }
+  .sidebar ol { list-style: none; padding-left: 0; margin: 0; counter-reset: nav; }
+  .sidebar ol li {
+    counter-increment: nav;
+    margin: 2px 0;
+  }
+  .sidebar ol li a {
+    display: block;
+    padding: 6px 8px;
+    color: #cfe0f5;
+    border-left: 3px solid transparent;
+    border-radius: 3px;
+    font-size: 13px;
+  }
+  .sidebar ol li a::before {
+    content: counter(nav) ". ";
+    color: var(--gold);
+    font-weight: 600;
+  }
+  .sidebar ol li a:hover {
+    background: var(--navy-2);
+    border-left-color: var(--gold);
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  .main {
+    flex: 1;
+    padding: 0 32px 40px 32px;
+    max-width: calc(100% - 300px);
+  }
+
+  /* Header */
+  header.page-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+    color: #ffffff;
+    padding: 28px 32px;
+    margin: 0 -32px 24px -32px;
+    border-bottom: 4px solid var(--gold);
+  }
+  header.page-header h1 {
+    margin: 0 0 6px 0;
+    font-size: 24px;
+    color: #ffffff;
+  }
+  header.page-header .sub {
+    color: #b9cbe6;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .stat {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(212,160,23,0.4);
+    border-radius: 6px;
+    padding: 10px 14px;
+    min-width: 130px;
+  }
+  .stat .num {
+    color: var(--gold);
+    font-size: 22px;
+    font-weight: 700;
+    display: block;
+    line-height: 1.1;
+  }
+  .stat .lbl {
+    color: #dbe4f2;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  /* Section cards (collapsible via <details>) */
+  details.card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--blue);
+    border-radius: 6px;
+    margin: 16px 0;
+    box-shadow: 0 1px 3px rgba(11,37,69,0.06);
+    overflow: hidden;
+  }
+  details.card[open] { border-left-color: var(--teal); }
+  details.card > summary {
+    cursor: pointer;
+    padding: 14px 18px;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--navy-2) 100%);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    list-style: none;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  details.card > summary::-webkit-details-marker { display: none; }
+  details.card > summary::after {
+    content: "▸";
+    color: var(--gold);
+    font-size: 14px;
+    transition: transform 0.15s;
+  }
+  details.card[open] > summary::after { transform: rotate(90deg); }
+  details.card > summary:hover { background: linear-gradient(90deg, var(--blue) 0%, var(--navy-2) 100%); }
+  details.card .body {
+    padding: 18px 22px;
+  }
+  details.card h3 {
+    color: var(--navy);
+    margin-top: 18px;
+    margin-bottom: 8px;
+    font-size: 15px;
+    border-bottom: 1px solid var(--sky);
+    padding-bottom: 4px;
+  }
+  details.card h3:first-child { margin-top: 0; }
+  details.card p { margin: 6px 0; }
+  details.card ul, details.card ol { margin: 6px 0 10px 20px; }
+  details.card li { margin: 3px 0; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 14px 0;
+    font-size: 13px;
+    background: #ffffff;
+  }
+  th {
+    background: var(--navy);
+    color: #ffffff;
+    text-align: left;
+    padding: 8px 10px;
+    border: 1px solid var(--navy-2);
+    font-weight: 600;
+    font-size: 12.5px;
+  }
+  td {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) td { background: var(--sky); }
+  tbody tr:hover td { background: #dceaf7; }
+
+  code, .code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: #eef3fa;
+    color: var(--navy);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12.5px;
+    border: 1px solid #dae4f0;
+  }
+
+  /* Gold badges/callouts */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 10px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+  .badge.new { background: var(--gold); color: var(--navy); border: 1px solid var(--gold-2); }
+  .badge.confirmed { background: var(--sky); color: var(--navy); border: 1px solid var(--blue); }
+  .badge.override { background: var(--gold-soft); color: var(--gold-2); border: 1px solid var(--gold-border); }
+  .badge.high { background: #f7d6d6; color: var(--danger); border: 1px solid var(--danger); }
+  .badge.medium { background: var(--gold-soft); color: var(--gold-2); border: 1px solid var(--gold-border); }
+  .badge.low { background: var(--sky); color: var(--blue); border: 1px solid var(--blue); }
+  .badge.diff { background: var(--gold-soft); color: var(--gold-2); border: 1px solid var(--gold-border); }
+  .badge.shared { background: var(--sky); color: var(--blue); border: 1px solid var(--blue); }
+
+  .callout {
+    background: var(--gold-soft);
+    border-left: 4px solid var(--gold);
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .callout.info {
+    background: var(--sky);
+    border-left-color: var(--blue);
+  }
+  .callout strong { color: var(--gold-2); }
+  .callout.info strong { color: var(--navy); }
+
+  /* Highlighted (gold) table rows/cells for overrides/warnings */
+  .gold-row td { background: var(--gold-soft) !important; }
+  .gold-row td:first-child { border-left: 3px solid var(--gold); }
+  td.gold { background: var(--gold-soft) !important; color: var(--gold-2); font-weight: 600; }
+  td.high { color: var(--danger); font-weight: 700; }
+
+  /* Sequence diagram (CSS-only) */
+  .seq-diagram {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px;
+    margin: 12px 0;
+    overflow-x: auto;
+  }
+  .seq-lanes {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .seq-actor {
+    background: var(--navy);
+    color: #ffffff;
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 4px 4px 0 0;
+    border-bottom: 3px solid var(--gold);
+  }
+  .seq-actor small { display: block; color: #b9cbe6; font-weight: 400; font-size: 10.5px; margin-top: 2px; }
+  .seq-step {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 10px;
+    margin: 8px 0;
+    align-items: center;
+  }
+  .seq-num {
+    background: var(--gold);
+    color: var(--navy);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    border: 2px solid var(--gold-2);
+  }
+  .seq-arrow {
+    background: var(--sky);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--teal);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    position: relative;
+  }
+  .seq-arrow .from-to {
+    color: var(--blue);
+    font-weight: 600;
+    font-size: 12px;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .seq-arrow .from-to .arrow {
+    color: var(--gold);
+    padding: 0 6px;
+    font-weight: 700;
+  }
+  .seq-arrow .msg { color: var(--text); }
+  .seq-arrow.self {
+    border-left-color: var(--gold);
+    background: var(--gold-soft);
+  }
+
+  /* Small utility */
+  .muted { color: var(--muted); font-size: 12.5px; }
+  .warn-line {
+    background: var(--gold-soft);
+    border-left: 4px solid var(--gold);
+    padding: 8px 12px;
+    margin: 8px 0;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .warn-line strong { color: var(--gold-2); }
+
+  hr.soft { border: none; border-top: 1px dashed var(--border); margin: 14px 0; }
+
+  /* Two-column layout helper for narrative paragraphs */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 1100px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .seq-lanes { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ============ STICKY SIDEBAR NAV ============ -->
+  <aside class="sidebar">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#s0">What Changed — Verification Pass</a></li>
+      <li><a href="#s1">Executive Summary</a></li>
+      <li><a href="#s2">Pay Plan Inventory (Account→Policy Structure)</a></li>
+      <li><a href="#s3">Full Policy Plan Table (SP_ACT_P1–P25)</a></li>
+      <li><a href="#s4">Base Duck Creek Plans</a></li>
+      <li><a href="#s5">Full Pay / Installment / Restriction Summary</a></li>
+      <li><a href="#s6">Configuration Inventory</a></li>
+      <li><a href="#s7">Business Rules Catalog</a></li>
+      <li><a href="#s8">Endorsement 25-Branch Matrix</a></li>
+      <li><a href="#s9">Down Payment Formulas (AutoPayPlanAssignment)</a></li>
+      <li><a href="#s10">Policy → Billing Flow (Diagram)</a></li>
+      <li><a href="#s11">Installment Schedule Processing</a></li>
+      <li><a href="#s12">Invoice Impact Analysis</a></li>
+      <li><a href="#s13">Transaction Impact Matrix</a></li>
+      <li><a href="#s14">Customization Inventory</a></li>
+      <li><a href="#s15">Database Objects &amp; Stored Procedures</a></li>
+      <li><a href="#s16">Company Comparison (SFP / CJN / MNT)</a></li>
+      <li><a href="#s17">LOB Comparison</a></li>
+      <li><a href="#s18">Company × LOB × State Difference Matrix</a></li>
+      <li><a href="#s19">Risks and Technical Debt</a></li>
+      <li><a href="#s20">Gaps and Open Questions</a></li>
+      <li><a href="#s21">Recommendations</a></li>
+      <li><a href="#s22">Test Scenario Recommendations</a></li>
+    </ol>
+  </aside>
+
+  <!-- ============ MAIN CONTENT ============ -->
+  <main class="main">
+
+    <header class="page-header">
+      <h1>Billing Pay Plans — Complete Skill &amp; Reference</h1>
+      <div class="sub">Safepoint / Cajun / Manatee &nbsp;·&nbsp; Codebase Scope: <code>f:\DuckCreek\Billing</code> &nbsp;·&nbsp; ManuScripts, SQL Stored Procedures, RRBillingSchema.xsd, DB Seed Scripts</div>
+      <div class="stats">
+        <div class="stat"><span class="num">25</span><span class="lbl">Safepoint Policy Plans (P1–P25)</span></div>
+        <div class="stat"><span class="num">10</span><span class="lbl">Safepoint Account Plans (A1–A10)</span></div>
+        <div class="stat"><span class="num">25</span><span class="lbl">Branch Endorsement Matrix</span></div>
+        <div class="stat"><span class="num">12</span><span class="lbl">Custom Stored Procedures</span></div>
+        <div class="stat"><span class="num">14</span><span class="lbl">Identified Risks (R1–R14)</span></div>
+        <div class="stat"><span class="num">3</span><span class="lbl">Underwriting Companies</span></div>
+        <div class="stat"><span class="num">7</span><span class="lbl">States (FL/LA/TX/AL/MS/SC/NC)</span></div>
+      </div>
+    </header>
+
+    <!-- ============ §0 ============ -->
+    <details class="card" id="s0" open>
+      <summary>1 · What Changed in This Verification Pass</summary>
+      <div class="body">
+        <p class="muted">Re-reading the actual ManuScript/SQL files (not just prior analysis docs) turned up one materially new fact and confirmed the rest as accurate.</p>
+        <table>
+          <thead>
+            <tr><th style="width:60px;">#</th><th style="width:110px;">Status</th><th>Finding</th></tr>
+          </thead>
+          <tbody>
+            <tr class="gold-row"><td>1</td><td><span class="badge new">New</span></td><td><strong>SC/NC is not a triplet.</strong> The prior analysis inferred all 8 non-Mortgagee / non-PremiumFinance state groups were 3-plan triplets. Reading <code>ValidAccountAndPolicyPlanCombinations</code> directly shows <code>SP_ACT_A10</code> (SC/NC) validates against only <code>SP_ACT_P25</code> — a single Full-Pay/Annual plan, with <strong>no</strong> Semi-Annual or Quarterly sibling. SC/NC insureds have no installment option under this plan family.</td></tr>
+            <tr class="gold-row"><td>2</td><td><span class="badge new">New</span></td><td><strong>FL's base group <code>SP_ACT_A1</code> is actually 4 plans, not 3.</strong> The matrix shows <code>SP_ACT_A1</code> validates against <code>P1, P2, P3, P4</code> — i.e. the FL base group includes the 9-Pay plan (<code>P4</code>) alongside the standard Annual/Semi-Annual/Quarterly triplet. <code>P4</code> is further gated by <code>IsAdvantagePolicy</code>.</td></tr>
+            <tr><td>3</td><td><span class="badge confirmed">Confirmed</span></td><td>The <code>Carrier_SP_BIL_AutoPayPlanAssignment</code> stored procedure body, its tiered down-payment thresholds, and the exact plan-group formulas (P1 / P8 / P10 / P13-16-19 groups) — all match the prior analysis verbatim, including the <code>+13</code> / <code>+6</code> / <code>+18</code> / premium-banded fee add-ons.</td></tr>
+            <tr><td>4</td><td><span class="badge confirmed">Confirmed</span></td><td>The <code>SP_ACT,P1</code> (comma-not-underscore) typo exists in <strong>two</strong> files — the legacy <code>InProcess_7.1</code> copy and the current <code>DB Scripts_7.2/Custom Objects/Stored Procedures</code> copy — meaning the defect is live in the current deployed procedure, not just a historical artifact.</td></tr>
+            <tr><td>5</td><td><span class="badge confirmed">Confirmed</span></td><td>The <code>SP_ACT_16,SP_ACT_17,SP_ACT_18</code> (missing <code>_P</code>) typo exists in <code>Carrier_Billing_PolicyPlanSetup_Direct_1_0_0_0.xml</code>'s <code>data.ForStateSpecific</code> comparison.</td></tr>
+            <tr><td>6</td><td><span class="badge confirmed">Confirmed</span></td><td><code>Carrier_Billing_Events_Integration_1_0_0_0.xml</code> and <code>Carrier_Billing_Events_BatchPayment_1_0_0_0.xml</code> both call <code>Carrier_SP_BIL_AutoPayPlanAssignment</code> with <code>&lt;onFailure value="" /&gt;</code> (empty) — silent-failure risk is real and current.</td></tr>
+            <tr><td>7</td><td><span class="badge confirmed">Confirmed</span></td><td><code>BIL_PROCESSINGBRANCH</code> company-code seed data — Safepoint has no explicit seed row (implied default), Cajun = <code>2</code>/<code>8888</code> ("Cajun UnderWriters"), Manatee = <code>3</code>/<code>7777</code> ("Manatee Insurance") — plus a legacy duplicate numbering scheme (<code>2</code>/<code>3</code> alongside <code>8888</code>/<code>7777</code>) confirmed still present in the same seed script.</td></tr>
+            <tr><td>8</td><td><span class="badge confirmed">Confirmed</span></td><td>A full-codebase search for <code>CJ_ACT</code> / <code>MN_ACT</code> returns <strong>zero</strong> results — Safepoint, Cajun, and Manatee definitively share one Pay Plan / Account Plan catalog.</td></tr>
+            <tr><td>9</td><td><span class="badge confirmed">Confirmed</span></td><td>No other material corrections — all remaining findings from the two source documents were spot-checked against the live files and confirmed accurate.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- ============ §1 ============ -->
+    <details class="card" id="s1" open>
+      <summary>2 · Executive Summary</summary>
+      <div class="body">
+        <p>Safepoint's Duck Creek Billing implementation layers <strong>25 carrier-specific Policy Plans</strong> (<code>SP_ACT_P1</code>–<code>SP_ACT_P25</code>) and <strong>10 Account Plans</strong> (<code>SP_ACT_A1</code>–<code>SP_ACT_A10</code>) on top of standard Duck Creek base plans (<code>DC_ACT_P*</code>, <code>DC_AGT_P*</code>, <code>DC_CLM_P*</code>). Behavior is driven mostly by ManuScript configuration tables (<code>BillClassDependencies</code>, <code>ValidAccountAndPolicyPlanCombinations</code>, <code>TargetAccountClass</code>, <code>PolicyPlans</code>, <code>ServiceChargePlans</code>), supplemented by a small number of custom SQL stored procedures (<code>Carrier_SP_BIL_*</code>).</p>
+        <p>The two most consequential pieces of custom logic:</p>
+        <ul>
+          <li><span class="badge override">Custom</span> <code>Carrier_SP_BIL_AutoPayPlanAssignment</code> — automatically re-plans a policy (e.g. Annual → Semi-Annual/Quarterly) based on the size of the first payment received.</li>
+          <li><span class="badge override">Custom</span> The <strong>25-branch <code>UpdatePayPlan</code> endorsement matrix</strong> (<code>Carrier_Billing_Events_PolicyTerm_Post_Actions_1_0_0_0.xml</code>) — hard-coded state / escrow / mortgagee / premium-finance rules that switch the Account/Policy Plan when billing-party-relevant endorsements occur.</li>
+        </ul>
+        <div class="callout">
+          <strong>Headline cross-company finding:</strong> Safepoint, Cajun, and Manatee share <strong>one identical</strong> Pay Plan and Account Plan catalog — a full-codebase search for <code>CJ_ACT</code>/<code>MN_ACT</code> returns zero hits. Every genuine company difference lives in the <strong>presentation/routing layer only</strong> — document templates, print-queue paths, activity-log narrative prefixes, and payment-gateway carrier labeling — never in down-payment %, installment count, due-date, renewal, or eligibility math. No Line-of-Business gate on Pay Plan eligibility exists anywhere in the Billing layer; LOB only drives which cancellation-notice template renders.
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ §2 ============ -->
+    <details class="card" id="s2" open>
+      <summary>3 · Pay Plan Inventory — Verified Account → Policy Plan Structure</summary>
+      <div class="body">
+        <p>This table replaces the "inferred from naming/down-payment-% pattern" language in the original analysis with the <strong>actual validity matrix</strong> read directly from <code>ValidAccountAndPolicyPlanCombinations</code> in <code>Carrier_Billing_AccountAndPolicyPlanConfiguration_1_0_0_0.xml</code>.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Account Plan</th>
+              <th>State / Model</th>
+              <th>Valid Policy Plans</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="gold-row"><td><code>SP_ACT_A1</code></td><td>FL Base</td><td><code>P1</code> (Annual), <code>P2</code> (Semi-Annual 60%), <code>P3</code> (Quarterly 40%), <code>P4</code> (9-Pay 20%)</td><td><span class="badge new">New</span> <strong>4 plans, not 3</strong> — <code>P4</code> additionally requires <code>IsAdvantagePolicy=true</code></td></tr>
+            <tr><td><code>SP_ACT_A2</code></td><td>FL Mortgagee / Escrow</td><td><code>P5</code> only (Full Pay Mortgagee)</td><td>Single-plan carve-out; excluded from auto-renewal &amp; AutoPayPlanAssignment</td></tr>
+            <tr><td><code>SP_ACT_A3</code></td><td>LA Base (non-Advantage)</td><td><code>P6</code> (Semi-Annual 55%), <code>P7</code> (Quarterly 40%), <code>P8</code> (Annual)</td><td>Standard triplet</td></tr>
+            <tr><td><code>SP_ACT_A4</code></td><td>Premium Finance (LA/TX/FL)</td><td><code>P9</code> only (Full Pay Premium Finance)</td><td>Single-plan carve-out; excluded from auto-renewal &amp; AutoPayPlanAssignment</td></tr>
+            <tr><td><code>SP_ACT_A5</code></td><td>TX Base (non-Advantage)</td><td><code>P10</code> (Annual), <code>P11</code> (Semi-Annual 60%), <code>P12</code> (Quarterly 40%)</td><td>Standard triplet</td></tr>
+            <tr><td><code>SP_ACT_A6</code></td><td>LA Advantage</td><td><code>P13</code> (Annual), <code>P14</code> (Semi-Annual 55%), <code>P15</code> (Quarterly 31%)</td><td>Standard triplet</td></tr>
+            <tr><td><code>SP_ACT_A7</code></td><td>AL Advantage</td><td><code>P16</code> (Annual), <code>P17</code> (Semi-Annual 55%), <code>P18</code> (Quarterly 31%)</td><td>Standard triplet</td></tr>
+            <tr><td><code>SP_ACT_A8</code></td><td>TX Advantage</td><td><code>P19</code> (Annual), <code>P20</code> (Semi-Annual 55%), <code>P21</code> (Quarterly 31%)</td><td>Standard triplet</td></tr>
+            <tr><td><code>SP_ACT_A9</code></td><td>MS Advantage</td><td><code>P22</code> (Annual), <code>P23</code> (Semi-Annual 55%), <code>P24</code> (Quarterly 31%)</td><td>Standard triplet</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_A10</code></td><td><strong>SC / NC</strong></td><td><strong><code>P25</code> only (Annual / Full Pay)</strong></td><td><span class="badge new">New</span> ⚠ Verified single-plan group — no installment sibling exists. SC/NC insureds cannot elect Semi-Annual or Quarterly under this Account Plan.</td></tr>
+          </tbody>
+        </table>
+        <p class="muted">Total: 4 + 1 + 3 + 1 + 3 + 3 + 3 + 3 + 3 + 1 = <strong>25 Policy Plans</strong>, matching the full <code>SP_ACT_P1</code>–<code>P25</code> range exactly.</p>
+      </div>
+    </details>
+
+    <!-- ============ §2.2 Full Policy Plan Table ============ -->
+    <details class="card" id="s3">
+      <summary>4 · Full Policy Plan Table (SP_ACT_P1–P25)</summary>
+      <div class="body">
+        <p class="muted">Verified from <code>PolicyPlans</code> table.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Plan Code</th>
+              <th>Description</th>
+              <th>Frequency</th>
+              <th>Down %</th>
+              <th>Max Inst.</th>
+              <th>Commission</th>
+              <th>PIF Eligible</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="gold-row"><td><code>SP_ACT_P1</code></td><td>Full Pay</td><td>ANNUAL</td><td>0%</td><td>1</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P2</code></td><td>Semi-Annual (60% Down)</td><td>SEMIANNUAL</td><td>60%</td><td>2</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P3</code></td><td>Quarterly (40% Down)</td><td>QUARTERLY</td><td>40%</td><td>4</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P4</code></td><td>9 Pay (20% Down)</td><td>MONTHLY</td><td>20%</td><td>9</td><td>POP1</td><td><span class="badge override">Advantage-gated</span> Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P5</code></td><td>Full Pay Mortgagee</td><td>ANNUAL</td><td>0%</td><td>1</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P6</code></td><td>Semi-Annual (55% Down)</td><td>SEMIANNUAL</td><td>55%</td><td>2</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P7</code></td><td>Quarterly (40% Down)</td><td>QUARTERLY</td><td>40%</td><td>4</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P8</code></td><td>Full Pay</td><td>ANNUAL</td><td>0%</td><td>1</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P9</code></td><td>Full Pay Premium Finance</td><td>ANNUAL</td><td>0%</td><td>1</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P10</code></td><td>Full Pay</td><td>ANNUAL</td><td>0%</td><td>1</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P11</code></td><td>Semi-Annual (60% Down)</td><td>SEMIANNUAL</td><td>60%</td><td>2</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P12</code></td><td>Quarterly (40% Down)</td><td>QUARTERLY</td><td>40%</td><td>4</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P13</code></td><td>Full Pay</td><td>ANNUAL</td><td>0%</td><td>1</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P14</code></td><td>Semi-Annual (55% Down)</td><td>SEMIANNUAL</td><td>55%</td><td>2</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P15</code></td><td>Quarterly (31% Down)</td><td>QUARTERLY</td><td>31%</td><td>4</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P16</code></td><td>Full Pay</td><td>ANNUAL</td><td>0%</td><td>1</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P17</code></td><td>Semi-Annual (55% Down)</td><td>SEMIANNUAL</td><td>55%</td><td>2</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P18</code></td><td>Quarterly (31% Down)</td><td>QUARTERLY</td><td>31%</td><td>4</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P19</code></td><td>Full Pay</td><td>ANNUAL</td><td>0%</td><td>1</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P20</code></td><td>Semi-Annual (55% Down)</td><td>SEMIANNUAL</td><td>55%</td><td>2</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P21</code></td><td>Quarterly (31% Down)</td><td>QUARTERLY</td><td>31%</td><td>4</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P22</code></td><td>Full Pay</td><td>ANNUAL</td><td>0%</td><td>1</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P23</code></td><td>Semi-Annual (55% Down)</td><td>SEMIANNUAL</td><td>55%</td><td>2</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P24</code></td><td>Quarterly (31% Down)</td><td>QUARTERLY</td><td>31%</td><td>4</td><td>POP1</td><td>Yes</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P25</code></td><td>Full Pay</td><td>ANNUAL</td><td>0%</td><td>1</td><td>POP1</td><td>Yes</td></tr>
+          </tbody>
+        </table>
+        <p class="muted"><span class="badge override">Gold rows</span> indicate carrier-specific Safepoint overrides on top of the Duck Creek base catalog.</p>
+      </div>
+    </details>
+
+    <!-- ============ §2.3 Base DC Plans ============ -->
+    <details class="card" id="s4">
+      <summary>5 · Base Duck Creek Plans (non-Safepoint, still configured)</summary>
+      <div class="body">
+        <table>
+          <thead>
+            <tr>
+              <th>Plan Code</th>
+              <th>Description</th>
+              <th>Frequency</th>
+              <th>Down %</th>
+              <th>Max Inst.</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>DC_ACT_P1</code></td><td>Full Pay</td><td>ANNUAL</td><td>0%</td><td>1</td></tr>
+            <tr><td><code>DC_ACT_P2</code></td><td>10 Monthly Installments (Paper)</td><td>MONTHLY</td><td>0%</td><td>10</td></tr>
+            <tr><td><code>DC_ACT_P3</code></td><td>12 Monthly Installments (EFT)</td><td>MONTHLY</td><td>0%</td><td>12</td></tr>
+            <tr><td><code>DC_ACT_P4</code></td><td>4 Quarterly Installments</td><td>QUARTERLY</td><td>0%</td><td>4</td></tr>
+            <tr><td><code>DC_ACT_P5</code></td><td>40% Down + 2×30% (90 days apart)</td><td>QUARTERLY</td><td>40%</td><td>3</td></tr>
+            <tr><td><code>DC_ACT_P6</code></td><td>10 Monthly (Paper – Standard Cancel)</td><td>MONTHLY</td><td>0%</td><td>10</td></tr>
+            <tr><td><code>DC_ACT_P7</code></td><td>Full Pay (Standard Cancel)</td><td>ANNUAL</td><td>0%</td><td>1</td></tr>
+            <tr><td><code>DC_ACT_P9</code></td><td>CustomPlan1 (Paper, no service charge)</td><td>CUSTOM</td><td>0%</td><td>12 (custom)</td></tr>
+            <tr><td><code>DC_ACT_P10</code></td><td>CustomPlan2 ($2 flat service charge)</td><td>CUSTOM</td><td>0%</td><td>12 (custom)</td></tr>
+            <tr><td><code>DC_AGT_P1–P4</code></td><td>Agent variants (Full Pay / Quarterly / Monthly 10 / 20%+9)</td><td>Various</td><td>—</td><td>—</td></tr>
+            <tr><td><code>DC_CLM_P1</code></td><td>Full Pay (Claims account)</td><td>ANNUAL</td><td>0%</td><td>1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- ============ §2.4 Restriction Summary ============ -->
+    <details class="card" id="s5">
+      <summary>6 · Full Pay / Installment / Restriction Summary</summary>
+      <div class="body">
+        <ul>
+          <li><strong>Full Pay options:</strong> any ANNUAL, 1-installment plan — <code>SP_ACT_P1</code>/<code>P5</code>/<code>P8</code>/<code>P9</code>/<code>P10</code>/<code>P13</code>/<code>P16</code>/<code>P19</code>/<code>P22</code>/<code>P25</code>, <code>DC_ACT_P1</code>/<code>P7</code>, <code>DC_AGT_P1</code>, <code>DC_CLM_P1</code>.</li>
+          <li><strong>Installment counts:</strong> Semi-Annual=2, Quarterly=4, 9-Pay=9, 10-Monthly=10, 12-Monthly=12 (via <code>BillClassDependencies.MaxInstallments</code>).</li>
+          <li><strong>Custom schedules:</strong> <code>DC_ACT_P9</code>/<code>P10</code> use fully custom installment tables (<code>Custom1/2Installments</code> + <code>DistributionForCustom1/2Installments</code>) — <span class="badge medium">⚠ Risk R11</span> these key off the <strong>generic DCT sample code</strong> <code>DC_ACT_P9</code>, not the live Safepoint <code>SP_ACT_P9</code> plan.</li>
+          <li><strong><code>SP_ACT_P4</code> (9-Pay)</strong> additionally requires <code>Scheduling_PolicyPlanPrivate.IsAdvantagePolicy = true</code>, resolved via <code>Carrier_SP_BIL_getCoverageByPolicyNumber</code>.</li>
+          <li><strong>Validity gate:</strong> every <code>SP_ACT_Pxx</code> option is individually validated against the current Account Plan via <code>ValidAccountAndPolicyPlanCombinations</code> — invalid combinations are hidden from the UI, not rejected server-side (<span class="badge high">Risk R7</span>).</li>
+        </ul>
+      </div>
+    </details>
+
+    <!-- ============ §3 Configuration Inventory ============ -->
+    <details class="card" id="s6">
+      <summary>7 · Configuration Inventory</summary>
+      <div class="body">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Purpose</th>
+              <th>Location</th>
+              <th>Dependency</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>PolicyPlans</code></td><td>Local Table</td><td>Master list of all plan codes + captions</td><td><code>Carrier_Billing_AccountAndPolicyPlanConfiguration_1_0_0_0.xml</code></td><td>None</td></tr>
+            <tr><td><code>ValidAccountAndPolicyPlanCombinations</code></td><td>Local Table</td><td>Matrix validating which Policy Plans are legal under which Account Plans</td><td>Same file</td><td><code>AccountPlanCodeToValidate</code></td></tr>
+            <tr><td><code>BillClassDependencies</code></td><td>Local Table</td><td>Central config: MaxInstallments, Frequency, NBDeposit %, CommissionScheme, PCN/AutoRescind, PIF discount, FollowUpPlanCode</td><td>Same file</td><td>Keyed by PolicyPlanCode</td></tr>
+            <tr><td><code>CustomInstallmentMapping</code></td><td>Local Table</td><td>Maps <code>DC_ACT_P9</code>/<code>P10</code> to custom installment/distribution tables</td><td>Same file</td><td><code>Custom1/2Installments</code></td></tr>
+            <tr><td><code>Custom1/2Installments</code></td><td>Local Table</td><td>Installment ID + Due Date Offset for custom plans</td><td>Same file</td><td><code>_BillingInputDoc.CachedPlanCode</code></td></tr>
+            <tr><td><code>DistributionForCustom1/2Installments</code></td><td>Local Table</td><td>Premium/Tax/Fee % distribution per installment</td><td>Same file</td><td>—</td></tr>
+            <tr><td><code>FollowUpConfigSetting</code></td><td>Local Table</td><td>Per-FollowUp-plan PCN/auto-rescind/reinstate config</td><td>Same file</td><td>Keyed by <code>FollowUpPlanCode</code></td></tr>
+            <tr><td><code>Scheduling_PolicyPlan.PlanCode</code></td><td>Public field (radio)</td><td>UI field for selecting Policy Pay Plan</td><td><code>Carrier_Billing_PolicyPlanSetup_Direct_1_0_0_0.xml</code></td><td>25 <code>SP_ACT_PxxIsValid</code> fields</td></tr>
+            <tr><td><code>DownPayments_PolicyPlan</code> / <code>DP_PolicyPlan_Deposit</code> / <code>DP_PolicyPlan_FEE</code></td><td>Object/Fields</td><td>Down payment %, receivable type/sub-type, transaction applicability</td><td>Same file</td><td><code>BillClassDependencies.NBDeposit</code></td></tr>
+            <tr><td><code>CustomInstallments_PolicyPlan</code></td><td>Object</td><td>UI-editable custom installment schedule (<code>DC_ACT_P9</code>/<code>P10</code> only)</td><td>Same file</td><td><code>CustomInstallmentMapping</code></td></tr>
+            <tr><td><code>PlanSelect</code> / <code>PlanManuScripts</code></td><td>Local Tables</td><td>Routes which Policy Plan Setup manuscript loads</td><td><code>Carrier_Billing_PolicyPlanSetup_Select_1_0_0_0.xml</code></td><td>—</td></tr>
+            <tr><td><code>TargetAccountClass</code></td><td>Local Table</td><td>Maps each <code>SP_ACT_Pxx</code> to a target Account Class (<code>SPD1</code>…<code>SPDP</code>)</td><td><code>Carrier_Billing_Events_PolicyTerm_Post_Actions_1_0_0_0.xml</code></td><td><code>Carrier_SP_BIL_UpdateAccountClassCode</code></td></tr>
+            <tr><td><code>InvoiceThreshold</code></td><td>Local Table</td><td>Minimum invoice-generation $ threshold by state (FL/TX=6, LA/AL/MS/SC/NC=7)</td><td>Same file</td><td><code>Carrier_SP_BIL_UpdateInvoiceThreshold</code></td></tr>
+            <tr><td><code>PRBFStateCodes</code></td><td>Local Table</td><td>"Previously Billed Fee" charge amount by state (FL=3, LA=6, TX=8)</td><td>Same file</td><td><code>CalledPrevBilledFee</code> object</td></tr>
+            <tr><td><code>StatePlanPay</code></td><td>Local Table</td><td>Down-payment-tier → target pay plan lookup (FL/LA)</td><td><code>Carrier_Billing_Events_BatchPayment_1_0_0_0.xml</code></td><td><code>CarrierRules_ExecuteChangePayPlan</code></td></tr>
+            <tr><td><code>ServiceChargePlans</code></td><td>Local Table</td><td>Service charge plans (<code>SVC1/2</code>, <code>SPSVC1-6</code>), rate type/amount/min/max</td><td><code>Carrier_Billing_Charges_ServiceCharges_Rules_US_1_0_0_0.xml</code></td><td><code>PlanCodes</code> (LOB×Form×State)</td></tr>
+            <tr><td><code>PlanCodes</code> (service charge)</td><td>Local Table</td><td>Maps LOB Type + Policy Form + State → ServiceChargePlanCode</td><td>Same file</td><td>—</td></tr>
+            <tr><td><code>VariedChargeAmounts</code></td><td>Local Table</td><td>Outstanding-balance-tiered varied service charge amount</td><td>Same file</td><td><code>Account.OutstandingBalance</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- ============ §4 Business Rules ============ -->
+    <details class="card" id="s7">
+      <summary>8 · Business Rules Catalog</summary>
+      <div class="body">
+
+        <h3>4.1 · Pay Plan Eligibility</h3>
+        <p>Each <code>SP_ACT_Pxx</code> option on <code>Scheduling_PolicyPlan.PlanCode</code> is gated by <code>SP_ACT_PxxIsValid</code>, which performs a lookup into <code>ValidAccountAndPolicyPlanCombinations</code> keyed by current Account Plan Code + this Policy Plan Code. <code>SP_ACT_P4</code> additionally requires <code>IsAdvantagePolicy=true</code>. <code>DC_ACT_P9</code>/<code>P10</code> restricted to accounts with exactly one active PolicyTerm.</p>
+
+        <h3>4.2 · New Business</h3>
+        <p>On NBUS, <code>PlanCodeDependancies.UpdateDependantPlanValues</code> cascades <code>BillClassDependencies</code> lookups (MaxInstallments, Frequency, CommissionScheme, NBDeposit %, PCNAllow, offsets) and rebuilds custom installments when a custom plan is chosen. PIF discount eligibility recomputed via <code>SetPIFDiscountEligible</code>.</p>
+
+        <h3>4.3 · Renewal</h3>
+        <ol>
+          <li><code>ChangeRenewalPolicyPlan</code> — fires on <code>RNEW</code>/<code>NBUS</code> when current plan is <strong>not</strong> <code>SP_ACT_P5</code>, forces the renewal Policy Plan to the "Annual" captioned sibling (fragile caption-string match, not a code lookup).</li>
+          <li><code>PostPolicyTermConfigChangeEvent</code> re-fires the same rule, excluding both <code>SP_ACT_P5</code> and <code>SP_ACT_P9</code>.</li>
+          <li><code>Carrier_SP_BIL_UpdateRenewalTermConfig</code> nulls <code>RenewalConfigTemplate</code>/<code>RenewalAccountId</code>/<code>RenewalConfig</code> for <code>P5</code>/<code>P9</code> specifically — verified idempotent (pure <code>UPDATE...SET...=NULL</code>).</li>
+          <li><code>Carrier_SP_BIL_GetPolicyRenewalPlanCode</code> retrieves effective renewal plan code from <code>RenewalConfig</code> (falling back to <code>PolicyTermConfig</code>).</li>
+        </ol>
+
+        <h3>4.4 · Endorsement — the 25-Branch Matrix</h3>
+        <p><code>UpdatePayPlan.Value</code> (fires only on <code>ENDT</code>) contains ~25 explicit <code>&lt;if&gt;</code> blocks testing <code>PartyInformation.BillToEscrow</code>, <code>FirstMortgageeName</code>, <code>Policy.PolicyStateCode</code>, and current-vs-target plan mismatch. No table drives this — every branch is a literal comparison. Full state/condition/target table lives in <a href="#s8">Section 9</a>.</p>
+
+        <h3>4.5 · Cancellation</h3>
+        <p><code>WriteOffChargeAfterCancellation</code> (FCAN) writes off <code>ISTP</code> receivables not closed/written-off, or suspends payment if an allocation exists. <code>UpdateScheduledActivityDateForCancellation</code> (PCAN) holds Overpayment and schedules <code>RLHD</code>. Small-balance (≤$5) dust auto-write-off on PCAN. <code>ReinstatementFee</code> sets a $50 charge for SC/NC FCAN/PCAN when <code>NonPayCancelReinstateIndicator</code> is true.</p>
+
+        <h3>4.6 · Reinstatement</h3>
+        <p><code>ReverseWriteOffAfterReinstate</code> (REIN) reverses previously written-off <code>ISTP</code>. <code>ExecuteReinDueToNoticeOfLapse</code> is an <strong>automated, non-user-initiated Reinstatement</strong>. Verified conditions: policy <code>Flat Cancelled</code>/<code>FC</code> <strong>and</strong> <code>NoticeOfLapse.NOL=1</code> <strong>and</strong> day-diff between processing date and invoice due date ≤ 15 days <strong>and</strong> invoice total ≤ suspense on account → system logs in as a service account and calls <code>TransACT.startTransactionRq code="Reinstate"</code> automatically. Confirmed duplicated verbatim across <code>Carrier_Billing_Events_Integration_1_0_0_0.xml</code>, <code>Carrier_Billing_Events_BatchPayment_1_0_0_0.xml</code>, and <code>Carrier_Billing_Events_Payment_Actions_1_0_0_0.xml</code>.</p>
+
+        <h3>4.7 · Down Payment Calculation</h3>
+        <p>Static: <code>BillClassDependencies.NBDeposit</code> % applied against Premium. Dynamic formulas from <code>Carrier_SP_BIL_AutoPayPlanAssignment</code> are in <a href="#s9">Section 10</a>.</p>
+
+        <h3>4.8 · Installment Calculation</h3>
+        <p><code>MaxNumberOfInstallments</code> ← <code>BillClassDependencies.MaxInstallments</code>. Custom plans build from <code>CustomInstallmentMapping</code> → <code>Custom1/2Installments</code> × <code>DistributionForCustom1/2Installments</code>. <code>InstallmentCount</code> never exceeds <code>MaxNumberInstallments</code>.</p>
+
+        <h3>4.9 · Due Date Calculation</h3>
+        <p><code>NewBusinessEarliestBillOffset</code>/<code>RNEarlyInvOffset</code>/<code>LastDueDayOffset</code> ← <code>BillClassDependencies</code> (default 0 for Safepoint plans). Service-charge due-day banding maps Frequency × days-since-effective-date to a due-day offset.</p>
+
+      </div>
+    </details>
+
+    <!-- ============ §4.4 25-Branch Matrix ============ -->
+    <details class="card" id="s8">
+      <summary>9 · Endorsement 25-Branch Matrix</summary>
+      <div class="body">
+        <p>Confirmed target codes in the live <code>UpdatePayPlan.Value</code> — each row is a hard-coded <code>&lt;if&gt;</code> branch calling <code>Requests.ChangeAccountPlan</code> and/or <code>ChangePolicyPlan</code>.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>State</th>
+              <th>Condition</th>
+              <th>Target Account/Policy Plan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>FL</td><td>No Mortgagee (Escrow=0/blank)</td><td><code>SP_ACT_A1</code> / <code>P1</code></td></tr>
+            <tr class="gold-row"><td>FL</td><td>Escrow = 1</td><td><code>SP_ACT_A2</code> / <code>P5</code></td></tr>
+            <tr><td>LA (non-Advantage)</td><td>No Mortgagee</td><td><code>SP_ACT_A3</code> / <code>P8</code></td></tr>
+            <tr><td>LA (Advantage)</td><td>No Mortgagee</td><td><code>SP_ACT_A6</code> / <code>P13</code></td></tr>
+            <tr><td>TX (non-Advantage)</td><td>No Mortgagee</td><td><code>SP_ACT_A5</code> / <code>P10</code></td></tr>
+            <tr><td>TX (Advantage)</td><td>No Mortgagee</td><td><code>SP_ACT_A8</code> / <code>P19</code></td></tr>
+            <tr><td>AL (Advantage)</td><td>No Mortgagee</td><td><code>SP_ACT_A7</code> / <code>P16</code></td></tr>
+            <tr><td>MS (Advantage)</td><td>No Mortgagee</td><td><code>SP_ACT_A9</code> / <code>P22</code></td></tr>
+            <tr class="gold-row"><td>SC / NC</td><td>No Mortgagee</td><td><code>SP_ACT_A10</code> / <code>P25</code> <span class="badge new">Only option — no installment sibling</span></td></tr>
+            <tr class="gold-row"><td>Any of LA/TX/FL</td><td>Premium Finance added</td><td><code>SP_ACT_A4</code> / <code>P9</code></td></tr>
+          </tbody>
+        </table>
+        <div class="callout"><strong>Risk R1:</strong> Hard-coded 25-branch matrix, non-table-driven; confirmed typo <code>SP_ACT_16/17/18</code> (missing <code>_P</code>) still present in <code>data.ForStateSpecific</code>.</div>
+      </div>
+    </details>
+
+    <!-- ============ §4.7 Down Payment Formulas ============ -->
+    <details class="card" id="s9">
+      <summary>10 · Down Payment Formulas (AutoPayPlanAssignment)</summary>
+      <div class="body">
+        <p>Exact formulas confirmed from the live <code>Carrier_SP_BIL_AutoPayPlanAssignment</code> stored procedure body.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Plan Group</th>
+              <th>Semi-Annual Threshold</th>
+              <th>Quarterly Threshold</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>SP_ACT_P1</code> (non-FC)</td><td>(Premium × 0.60) + Tax + Fee + 13</td><td>(Premium × 0.30) + Tax + Fee + 13</td></tr>
+            <tr class="gold-row"><td><code>SP_ACT_P1</code> + HomeownersAdvantage LOB</td><td>(Premium × 0.60) + Tax + Fee + MIN(Premium × 0.18, 10)</td><td>(Premium × 0.30) + Tax + Fee + MIN(Premium × 0.18, 10)</td></tr>
+            <tr><td><code>SP_ACT_P8</code></td><td>(Premium × 0.55) + Tax + Fee + 6</td><td>(Premium × 0.30) + Tax + Fee + 6</td></tr>
+            <tr><td><code>SP_ACT_P10</code></td><td>(Premium × 0.60) + Tax + Fee + 18</td><td>(Premium × 0.30) + Tax + Fee + 18</td></tr>
+            <tr><td><code>SP_ACT_P13</code> / <code>P16</code> / <code>P19</code></td><td>(Premium × 0.55) + Tax + Fee + banded fee</td><td>(Premium × 0.31) + Tax + Fee + banded fee</td></tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          <strong>Banded fee</strong> (P13/P16/P19 groups): Premium &lt; 500 → $4; 500–649 → $5; ≥ 650 → $6. The same formula set also runs for Flat-Cancelled (<code>FC</code>) policies using accumulated <code>@TotalPremium</code>/<code>@TotalTax</code>/<code>@TotalFee</code> from the FCAN transaction instead of live schedule sums — confirmed present in the live stored procedure.
+        </div>
+        <div class="warn-line">
+          <strong>Only LOB-conditional branch in Pay Plan money-math:</strong> the <code>LineOfBusinessType='HomeownersAdvantage'</code> swap on <code>SP_ACT_P1</code> (gold row above).
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ §5 Diagram ============ -->
+    <details class="card" id="s10" open>
+      <summary>11 · Policy → Billing Flow (Endorsement Plan-Switch Sequence)</summary>
+      <div class="body">
+
+        <h3>Pay Plan Selection Paths</h3>
+        <ul>
+          <li><strong>Policy side (initial):</strong> <code>DCT_ProductBase.xml</code>'s <code>PolicyInput.PayPlan</code> — populated by user on Policy application/quote screen.</li>
+          <li><strong>Policy side (endorsement override):</strong> <code>SafePoint_Party_Update_2_1_0.xml</code>'s <code>PartyInformation.SetAccountPlanCode</code>/<code>SetPolicyPlanCode</code> — overrides pay plan on Party endorsement commit.</li>
+          <li><strong>Billing side (admin selection):</strong> <code>Scheduling_PolicyPlan.PlanCode</code> on "Term Plan Setup"/"Renewal Plan Setup" pages.</li>
+          <li><strong>Billing side (system-automated):</strong> <code>Carrier_SP_BIL_AutoPayPlanAssignment</code> — reassigns without UI interaction.</li>
+        </ul>
+
+        <h3>Storage &amp; Transmission</h3>
+        <p><strong>Storage:</strong> Compressed XML — <code>DC_BIL_PolicyTermData.PolicyTermConfig</code> containing <code>/PolicyTermConfig/Scheduling/@PlanCode</code>, read via <code>cast(decompress(PolicyTermConfig) as xml).value(...)</code> in every stored procedure. Renewal variant in <code>RenewalConfig</code>/<code>RenewalConfigTemplate</code>. History in <code>DC_BIL_PolicyTermHistory</code>/<code>DataHistory</code>.</p>
+        <p><strong>Transmission:</strong> <code>BillingRequests.BillingIntegrationBuildMessageRequest</code> (Local or Remote, gated by <code>DCTBillingIsRemote</code>) → <code>_BillingWorkingDoc.Populate_PayPlans</code> builds <code>&lt;PayPlans&gt;&lt;PayPlan Code PlanDesc BillMethod AccountPlanCode PolicyPlanCode/&gt;&lt;/PayPlans&gt;</code>. Schema-confirmed in <code>RRBillingSchema.xsd</code>.</p>
+
+        <h3>Sequence Diagram</h3>
+        <div class="seq-diagram">
+          <div class="seq-lanes">
+            <div class="seq-actor">U<small>User/CSR (Policy)</small></div>
+            <div class="seq-actor">P<small>Policy TransACT (SafePoint_Party_Update)</small></div>
+            <div class="seq-actor">PI<small>Billing Integration Framework</small></div>
+            <div class="seq-actor">B<small>Billing PolicyTerm Post Actions</small></div>
+            <div class="seq-actor">DB<small>Billing DB</small></div>
+          </div>
+
+          <div class="seq-step">
+            <div class="seq-num">1</div>
+            <div class="seq-arrow">
+              <span class="from-to">U <span class="arrow">→</span> P</span>
+              <span class="msg">Add / Modify / Delete Mortgagee, Premium Finance, or Escrow flag</span>
+            </div>
+          </div>
+
+          <div class="seq-step">
+            <div class="seq-num">2</div>
+            <div class="seq-arrow self">
+              <span class="from-to">P <span class="arrow">↻</span> P</span>
+              <span class="msg"><code>PartyInformation.SetAccountPlanCode</code> / <code>SetPolicyPlanCode</code> (hard-coded matrix)</span>
+            </div>
+          </div>
+
+          <div class="seq-step">
+            <div class="seq-num">3</div>
+            <div class="seq-arrow">
+              <span class="from-to">P <span class="arrow">→</span> PI</span>
+              <span class="msg"><code>BillAccount.searchByAccountReferenceRq</code></span>
+            </div>
+          </div>
+
+          <div class="seq-step">
+            <div class="seq-num">4</div>
+            <div class="seq-arrow">
+              <span class="from-to">PI <span class="arrow">→</span> B</span>
+              <span class="msg"><code>PostPolicyTerm(TransactionType=ENDT)</code> fires</span>
+            </div>
+          </div>
+
+          <div class="seq-step">
+            <div class="seq-num">5</div>
+            <div class="seq-arrow self">
+              <span class="from-to">B <span class="arrow">↻</span> B</span>
+              <span class="msg"><code>UpdatePayPlan.Value</code> evaluates <strong>25-branch matrix</strong></span>
+            </div>
+          </div>
+
+          <div class="seq-step">
+            <div class="seq-num">6</div>
+            <div class="seq-arrow">
+              <span class="from-to">B <span class="arrow">→</span> DB</span>
+              <span class="msg"><code>Requests.ChangeAccountPlan</code> / <code>ChangePolicyPlan</code></span>
+            </div>
+          </div>
+
+          <div class="seq-step">
+            <div class="seq-num">7</div>
+            <div class="seq-arrow self">
+              <span class="from-to">DB <span class="arrow">↻</span> DB</span>
+              <span class="msg"><code>PolicyTermConfig</code> XML updated, compressed &amp; stored</span>
+            </div>
+          </div>
+
+          <div class="seq-step">
+            <div class="seq-num">8</div>
+            <div class="seq-arrow self">
+              <span class="from-to">B <span class="arrow">↻</span> B</span>
+              <span class="msg"><code>InvoiceThresholdProcessing</code> → <code>Carrier_SP_BIL_UpdateInvoiceThreshold</code></span>
+            </div>
+          </div>
+
+          <div class="seq-step">
+            <div class="seq-num">9</div>
+            <div class="seq-arrow self">
+              <span class="from-to">B <span class="arrow">↻</span> B</span>
+              <span class="msg"><code>UpdateAccountClassCode</code> → <code>Carrier_SP_BIL_UpdateAccountClassCode</code></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ §6 Installment Schedule ============ -->
+    <details class="card" id="s11">
+      <summary>12 · Installment Schedule Processing</summary>
+      <div class="body">
+        <ul>
+          <li><strong>Creation:</strong> standard flow builds from <code>MaxNumberOfInstallments</code>, <code>PlannedInstallmentFrequencyCode</code>, <code>DownPayments_PolicyPlan</code>. Custom plans (<code>DC_ACT_P9</code>/<code>P10</code>) iterate <code>CustomInstallmentTable</code>/<code>InstallmentDistributionTable</code>.</li>
+          <li><strong>Recalculation:</strong> triggered by Pay Plan change, Endorsement, Frequency change, Reinstatement. <code>rescheduleTrigger="1"</code> on <code>AllocationPriorities</code>/<code>DownPayments</code>/<code>PolicyPlanDescription</code>/<code>RenewalPlanDescription</code> forces full reschedule comparison on save.</li>
+          <li><strong>Invoice generation impact:</strong> <code>InvoiceThresholdProcessing.SetInvoiceThresholdAmount</code> recalculates unconditionally on every <code>PolicyTermPostEvent</code>. <code>ExpireRPCNRecords</code> expires stale renewal-PCN activities on FCAN/PCAN.</li>
+          <li><strong>LAFA/Fee split:</strong> <code>DP_PolicyPlan_FEE</code> only activates for LA Advantage model plans <code>SP_ACT_P6/P7/P8/P9/P13/P14/P15/16/17/18</code> <span class="badge medium">Note the typo — Risk R1</span> via <code>data.ForStateSpecific</code>.</li>
+        </ul>
+      </div>
+    </details>
+
+    <!-- ============ §7 Invoice Impact ============ -->
+    <details class="card" id="s12">
+      <summary>13 · Invoice Impact Analysis</summary>
+      <div class="body">
+        <table>
+          <thead>
+            <tr>
+              <th>Trigger</th>
+              <th>Impact on Invoice</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Pay Plan selected at NBUS</td><td>Determines first invoice amount + subsequent installment count/frequency</td><td><code>DownPayments_PolicyPlan</code>, <code>BillClassDependencies</code></td></tr>
+            <tr class="gold-row"><td>Auto Pay Plan Assignment (post-1st-payment)</td><td>May retroactively downgrade Annual → Semi-Annual/Quarterly</td><td><code>Carrier_SP_BIL_AutoPayPlanAssignment</code></td></tr>
+            <tr><td>State-based Invoice Threshold</td><td>Suppresses invoice below $6/$7 depending on state</td><td><code>InvoiceThreshold</code></td></tr>
+            <tr><td>ENDT causing Plan switch</td><td>Forces reschedule + threshold recompute</td><td><code>UpdatePayPlan</code>, <code>InvoiceThresholdProcessing</code></td></tr>
+            <tr><td>Renewal to Annual (auto)</td><td>Full-premium renewal invoice unless P5/P9</td><td><code>ChangeRenewalPolicyPlan</code></td></tr>
+            <tr><td>Previously-Billed-Fee on frequency change</td><td>Adds PRBF charge, state-tiered</td><td><code>CalledPrevBilledFee</code>, <code>PRBFStateCodes</code></td></tr>
+            <tr><td>Installment Setup Fee (ISTP)</td><td>Added to first invoice for non-Annual NBUS/RNEW</td><td><code>InstallmentSetupFeeActions</code></td></tr>
+            <tr><td>Reinstatement Fee</td><td>$50 fee on reinstate after FCAN/PCAN in SC/NC</td><td><code>ReinstatementFee</code></td></tr>
+            <tr><td>Suspense-triggered auto-Reinstate</td><td>Suppresses/reverses a cancellation invoice cycle</td><td><code>ExecuteReinDueToNoticeOfLapse</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- ============ §8 Transaction Impact ============ -->
+    <details class="card" id="s13">
+      <summary>14 · Transaction Impact Matrix</summary>
+      <div class="body">
+        <table>
+          <thead>
+            <tr>
+              <th>Transaction</th>
+              <th>Pay Plan Read?</th>
+              <th>Pay Plan Changed?</th>
+              <th>Key Logic</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>New Business (NBUS)</td><td>Yes</td><td>Possibly (auto-assignment)</td><td><code>PlanCodeDependancies</code>, <code>Carrier_SP_BIL_AutoPayPlanAssignment</code></td></tr>
+            <tr class="gold-row"><td>Renewal (RNEW)</td><td>Yes</td><td>Yes — forced to Annual unless P5</td><td><code>ChangeRenewalPolicyPlan</code>, <code>Carrier_SP_BIL_UpdateRenewalTermConfig</code></td></tr>
+            <tr class="gold-row"><td>Endorsement (ENDT)</td><td>Yes</td><td>Yes — 25-branch matrix</td><td><code>UpdatePayPlan.Value</code></td></tr>
+            <tr><td>Cancellation (FCAN/PCAN)</td><td>Yes</td><td>No (write-off/suspense only)</td><td><code>WriteOffChargeAfterCancellation</code></td></tr>
+            <tr><td>Reinstatement (REIN)</td><td>Yes</td><td>No (reverses write-offs only)</td><td><code>ReverseWriteOffAfterReinstate</code></td></tr>
+            <tr><td>Reissue (REIS)</td><td>Pick-list only</td><td>Not Found in Codebase</td><td>—</td></tr>
+            <tr><td>Rewrite (RWRI)</td><td>Pick-list only</td><td>Not Found in Codebase</td><td>—</td></tr>
+            <tr><td>Rescind (RESC)</td><td>Yes</td><td>No</td><td><code>FollowUpConfigSetting.AutoRescindAllow/Plan</code></td></tr>
+            <tr class="gold-row"><td>Payment Applied</td><td>Yes</td><td>Possibly (auto-assignment)</td><td><code>CarrierRules_PostPaymentAppliedEvent</code></td></tr>
+            <tr class="gold-row"><td>Batch Payment</td><td>Yes</td><td>Possibly (auto-assignment)</td><td><code>Requests.PlanCheck_callStoredProcRq</code></td></tr>
+            <tr><td>Payment Reversal</td><td>No direct plan read found</td><td>No</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- ============ §9 Customization Inventory ============ -->
+    <details class="card" id="s14">
+      <summary>15 · Customization Inventory</summary>
+      <div class="body">
+        <table>
+          <thead>
+            <tr>
+              <th>Customization</th>
+              <th>Business Reason</th>
+              <th>Technical Implementation</th>
+              <th>Company-Specific?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="gold-row"><td><code>Carrier_SP_BIL_AutoPayPlanAssignment</code></td><td>Auto-downgrade Annual → Semi-Annual/Quarterly on partial first payment</td><td>T-SQL SP, 3 event hooks, verified formulas (Section 10)</td><td>No — shared</td></tr>
+            <tr class="gold-row"><td>25-branch <code>UpdatePayPlan</code> matrix</td><td>Route billing to insured/mortgagee/premium-finance by state</td><td>Hard-coded <code>&lt;if&gt;</code> chains, no table</td><td>No — shared, but named/originated Safepoint-first (see Gaps)</td></tr>
+            <tr class="gold-row"><td><code>SafePoint_Party_Update_2_1_0</code> mirror logic</td><td>Mirror same routing decision on Policy side</td><td><code>PartyInformation.SetAccountPlanCode</code>/<code>SetPolicyPlanCode</code></td><td>No — shared</td></tr>
+            <tr class="gold-row"><td><code>Carrier_SP_BIL_UpdateRenewalTermConfig</code></td><td>Prevent stale renewal config for P5/P9</td><td>T-SQL SP, verified idempotent</td><td>No — shared</td></tr>
+            <tr class="gold-row"><td><code>Carrier_SP_BIL_GetPreviousFrequency</code> + PRBF charge</td><td>Recoup admin cost on frequency change</td><td>SP + <code>CalledPrevBilledFee</code> object</td><td>No — shared</td></tr>
+            <tr class="gold-row"><td><code>Carrier_SP_BIL_UpdateProjectedServiceCharge</code></td><td>Toggle projected service charge by plan</td><td>SP — <strong>contains live typo defect (R6)</strong></td><td>No — shared</td></tr>
+            <tr class="gold-row"><td><code>Carrier_SP_BIL_UpdateAccountClassCode</code> + <code>TargetAccountClass</code></td><td>Sync Account Class Code for reporting</td><td>SP + 25-row lookup</td><td>No — shared</td></tr>
+            <tr class="gold-row"><td><code>ServiceChargePlans</code>/<code>PlanCodes</code> matrix</td><td>State/LOB/Form-specific service charge structure</td><td>Local tables + FL-DP-specific calc</td><td>No — shared</td></tr>
+            <tr class="gold-row"><td><code>Carrier_SP_BIL_getCoverageByPolicyNumber</code></td><td>Gate 9-Pay (<code>P4</code>) to FL Advantage only</td><td>SP call gating <code>validRef</code></td><td>No — shared</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- ============ §10 DB Objects ============ -->
+    <details class="card" id="s15">
+      <summary>16 · Database Objects &amp; Stored Procedures</summary>
+      <div class="body">
+
+        <h3>10.1 · Core Tables</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Table</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>DC_BIL_PolicyTerm</code></td><td>Header: PolicyTermId, PolicyReference, RenewalConfigTemplate, RenewalAccountId, PolicyTermExtendedData</td></tr>
+            <tr><td><code>DC_BIL_PolicyTermData</code></td><td><code>PolicyTermConfig</code> (compressed XML), <code>RenewalConfig</code></td></tr>
+            <tr><td><code>DC_BIL_PolicyTermHistory</code>/<code>DataHistory</code></td><td>Historical pay-plan/frequency snapshots</td></tr>
+            <tr><td><code>DC_BIL_Account</code></td><td><code>AccountConfig</code> (Scheduling/@PlanCode, Invoice/@UseProjectedServiceCharge)</td></tr>
+            <tr><td><code>DC_BIL_BillItem</code></td><td>Transaction-level billed items</td></tr>
+            <tr><td><code>DC_BIL_BillItemSchedule</code></td><td>Installment-level schedule rows, InvoiceStatus</td></tr>
+            <tr><td><code>DC_BIL_Payment</code>/<code>PaymentAllocation</code></td><td>Drives AutoPayPlanAssignment trigger</td></tr>
+            <tr><td><code>DC_BIL_Suspense</code></td><td>In-suspense amounts factoring into AutoPayPlanAssignment</td></tr>
+          </tbody>
+        </table>
+
+        <h3>10.2 · Custom Stored Procedures (Pay-Plan-Related)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Procedure</th>
+              <th>Purpose</th>
+              <th>Verified Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="gold-row"><td><code>Carrier_SP_BIL_AutoPayPlanAssignment</code></td><td>Auto-reassign pay plan post-first-payment</td><td>Body read in full; formulas match Section 10 exactly</td></tr>
+            <tr><td><code>Carrier_SP_BIL_GetPolicyRenewalPlanCode</code></td><td>Effective renewal-aware plan code</td><td>—</td></tr>
+            <tr><td><code>Carrier_SP_BIL_UpdateRenewalTermConfig</code></td><td>Null renewal config for P5/P9</td><td>Confirmed idempotent</td></tr>
+            <tr><td><code>Carrier_SP_BIL_GetPreviousFrequency</code></td><td>Prior frequency for PRBF charge</td><td>—</td></tr>
+            <tr class="gold-row"><td><code>Carrier_SP_BIL_UpdateProjectedServiceCharge</code></td><td>Toggle projected service charge flag</td><td><span class="badge high">Live typo</span> Confirmed <code>'SP_ACT,P1'</code></td></tr>
+            <tr><td><code>Carrier_SP_BIL_UpdateAccountClassCode</code></td><td>Sync Account Class Code</td><td>—</td></tr>
+            <tr><td><code>Carrier_SP_BIL_GetFirstInvoiceDateForRenew</code></td><td>First invoiced installment date for renewal</td><td>—</td></tr>
+            <tr><td><code>Carrier_SP_BIL_FirstInvoicePaymentOption</code></td><td>2-Pay/4-Pay alternate options</td><td>Not fully read (flagged gap)</td></tr>
+            <tr><td><code>Carrier_SP_BIL_GetPaymentCountAfterCancel</code></td><td>Payments received after cancellation</td><td>—</td></tr>
+            <tr><td><code>Carrier_SP_BIL_getCoverageByPolicyNumber</code></td><td>Determine Advantage LOB flag</td><td>—</td></tr>
+            <tr><td><code>Carrier_SP_BIL_UpdateInvoiceThreshold</code></td><td>State-driven invoice threshold</td><td>—</td></tr>
+            <tr><td><code>Carrier_SP_BIL_AddActivityLogEntryFromXML</code></td><td>Company-prefixed activity log narrative</td><td>Confirmed 1/2/3 case mapping</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- ============ §11 Company Comparison ============ -->
+    <details class="card" id="s16">
+      <summary>17 · Company Comparison (Safepoint / Cajun / Manatee)</summary>
+      <div class="body">
+
+        <h3>11.1 · Shared vs Different</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Dimension</th>
+              <th>Safepoint</th>
+              <th>Cajun</th>
+              <th>Manatee</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Available Pay Plans (Policy)</td><td><code>SP_ACT_P1</code>–<code>P25</code></td><td>Same set</td><td>Same set</td><td><span class="badge shared">Shared</span></td></tr>
+            <tr><td>Available Account Plans</td><td><code>SP_ACT_A1</code>–<code>A10</code></td><td>Same set</td><td>Same set</td><td><span class="badge shared">Shared</span></td></tr>
+            <tr><td>Down payment %, installment count, frequency</td><td>Per Full Policy Plan Table</td><td>Identical</td><td>Identical</td><td><span class="badge shared">Shared</span></td></tr>
+            <tr><td>Renewal forced-Annual rule</td><td>Applies to all except P5/P9</td><td>Same rule</td><td>Same rule</td><td><span class="badge shared">Shared</span></td></tr>
+            <tr><td>Endorsement 25-branch matrix</td><td>Full matrix</td><td>Same matrix reused</td><td>Same matrix reused</td><td><span class="badge shared">Shared</span></td></tr>
+            <tr><td>Cancellation/Reinstatement rules</td><td>Plan-code keyed</td><td>Same tables</td><td>Same tables</td><td><span class="badge shared">Shared</span></td></tr>
+            <tr class="gold-row"><td>Notice/Invoice document templates</td><td>Unsuffixed <code>SIC NTC…doc</code></td><td><code>_CJN.doc</code> suffix</td><td><code>MIE NTC…</code>/<code>_MNT.doc</code> (independent authoring)</td><td><span class="badge diff">Different</span></td></tr>
+            <tr class="gold-row"><td>Queue attachment path</td><td><code>Billing.SFPQueueAttachments</code></td><td><code>Billing.CJNQueueAttachments</code></td><td><code>Billing.MNTQueueAttachments</code></td><td><span class="badge diff">Different</span></td></tr>
+            <tr class="gold-row"><td>Activity Log narrative prefix</td><td>"Safepoint "</td><td>"Cajun "</td><td>"Manatee "</td><td><span class="badge diff">Different</span></td></tr>
+            <tr class="gold-row"><td>Payment gateway <code>CarrierName</code></td><td>AccountReference starts "S"</td><td>starts "C"</td><td>starts "M"</td><td><span class="badge diff">Different</span></td></tr>
+            <tr class="gold-row"><td><code>ProcessingOrgUnitCode</code> (Account/PolicyTerm)</td><td>9999 / 1 (implied default)</td><td>8888 / 2</td><td>7777 / 3</td><td><span class="badge diff">Different (discriminator)</span></td></tr>
+          </tbody>
+        </table>
+
+        <h3>11.2 · Company Discriminator Mechanisms (Two, Unsynchronized)</h3>
+        <ol>
+          <li><strong>Primary — <code>ProcessingOrgUnitCode</code> pair</strong> (Account-level AND PolicyTerm-level, combined via AND). Verified seed values: Safepoint = 9999/1 (implied), Cajun = 8888/2, Manatee = 7777/3. This exact AND-pattern (<code>IsSafepoint</code>/<code>IsCajun</code>/<code>IsManatee</code>) is duplicated verbatim across ≥5 manuscripts.</li>
+          <li><strong>Secondary — <code>AccountReference</code> first-letter match</strong>, used <strong>only</strong> in <code>PaymentProviderFields.CarrierName</code> (payment gateway labeling) — "S"/"C"/"M". Completely independent of mechanism #1 — <span class="badge high">Risk R9</span> these can silently disagree.</li>
+        </ol>
+      </div>
+    </details>
+
+    <!-- ============ §12 LOB Comparison ============ -->
+    <details class="card" id="s17">
+      <summary>18 · LOB (Line of Business) Comparison</summary>
+      <div class="body">
+        <div class="callout"><strong>Finding (confirmed):</strong> no LOB gate exists anywhere in Billing that restricts or varies Pay Plan availability, down payment, installment count, due dates, renewal, or cancellation behavior.</div>
+        <table>
+          <thead>
+            <tr>
+              <th>LOB Group</th>
+              <th>Pay Plan Variation</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>DP1, DP3 (Dwelling)</td><td>No LOB key column exists in Pay Plan tables</td><td>Unclear/Not gated</td></tr>
+            <tr><td>DW1, DW2, DW3 (Dwelling)</td><td>No LOB key column exists</td><td>Unclear/Not gated</td></tr>
+            <tr><td>DWO1 (TX Wind Only)</td><td>No LOB key column exists</td><td>Unclear/Not gated</td></tr>
+            <tr><td>HO2, HO3, HO4, HO6 (Homeowners)</td><td>No LOB key column exists</td><td>Unclear/Not gated</td></tr>
+            <tr><td>HW2, HW4, HW6 (Wind Only)</td><td>No LOB key column exists; LOB only drives notice-form selection</td><td>Unclear/Not gated</td></tr>
+          </tbody>
+        </table>
+        <p>LOB <strong>does</strong> drive <code>FormTableData.OutputFileLOB</code> — a <strong>document-template selector</strong> keyed on <code>LOB.LineOfBusinessType</code> strings (<code>LASelectDwelling</code>, <code>LAHomeownersAdvantage</code>, <code>TWIAWindOnly</code>, <code>ALHomeownersAdvantage</code>, <code>LASelectHomeowners</code>, <code>otherwise</code>) — this governs cancellation-notice wording only, never Pay Plan math.</p>
+        <div class="warn-line">
+          <strong>One exception:</strong> <code>Carrier_SP_BIL_AutoPayPlanAssignment</code> checks <code>LineOfBusinessType='HomeownersAdvantage'</code> to swap the flat $13 fee add-on for <code>MIN(Premium × 0.18, 10)</code> on <code>SP_ACT_P1</code> — the <strong>only</strong> confirmed LOB-conditional branch inside Pay Plan money-math in the entire codebase.
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ §13 Difference Matrix ============ -->
+    <details class="card" id="s18">
+      <summary>19 · Company × LOB × State Difference Matrix</summary>
+      <div class="body">
+        <table>
+          <thead>
+            <tr>
+              <th>Dimension</th>
+              <th>SFP vs CJN</th>
+              <th>SFP vs MNT</th>
+              <th>CJN vs MNT</th>
+              <th>Across LOBs</th>
+              <th>Across States</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Pay Plan codes available</td><td>No difference</td><td>No difference</td><td>No difference</td><td>No difference</td><td>No difference (same 25 codes; eligibility groups by state)</td></tr>
+            <tr><td>Down payment %</td><td>No difference</td><td>No difference</td><td>No difference</td><td>No difference</td><td>Varies by plan <strong>group</strong>, not a separate state key</td></tr>
+            <tr><td>Installment count</td><td>No difference</td><td>No difference</td><td>No difference</td><td>No difference</td><td>Varies by plan group; SC/NC has none</td></tr>
+            <tr><td>Renewal forced-Annual rule</td><td>No difference</td><td>No difference</td><td>No difference</td><td>No difference</td><td>No difference</td></tr>
+            <tr><td>Endorsement plan-switch matrix</td><td>No difference</td><td>No difference</td><td>No difference</td><td>No difference</td><td>Branches on State implicitly via Plan Code</td></tr>
+            <tr><td>Cancellation/Reinstatement rules</td><td>No difference</td><td>No difference</td><td>No difference</td><td>No difference</td><td>Only <code>PRBFStateCodes</code> fee table is state-keyed</td></tr>
+            <tr class="gold-row"><td>Document templates / branding</td><td>Different</td><td>Different</td><td>Different</td><td>Different (LOB drives notice-form select)</td><td>Implicit via LOB naming</td></tr>
+            <tr class="gold-row"><td>Queue / attachment paths</td><td>Different</td><td>Different</td><td>Different</td><td>N/A</td><td>N/A</td></tr>
+            <tr class="gold-row"><td>Activity log narrative</td><td>Different</td><td>Different</td><td>Different</td><td>N/A</td><td>N/A</td></tr>
+            <tr class="gold-row"><td>Payment gateway carrier labeling</td><td>Different</td><td>Different</td><td>Different</td><td>N/A</td><td>N/A</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- ============ §14 Risks ============ -->
+    <details class="card" id="s19">
+      <summary>20 · Risks and Technical Debt</summary>
+      <div class="body">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:60px;">#</th>
+              <th>Risk</th>
+              <th>Detail</th>
+              <th style="width:100px;">Severity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>R1</td><td>Hard-coded 25-branch endorsement matrix</td><td>Non-table-driven; confirmed typo <code>SP_ACT_16/17/18</code> (missing <code>_P</code>) still present in <code>data.ForStateSpecific</code></td><td><span class="badge high">High</span></td></tr>
+            <tr><td>R2</td><td>Silent failure on <code>AutoPayPlanAssignment</code></td><td>Confirmed <code>&lt;onFailure value="" /&gt;</code> at all 3 call sites (Integration, BatchPayment, Payment_Actions)</td><td><span class="badge high">High</span></td></tr>
+            <tr><td>R3</td><td>String-parsing <code>BillMethod</code> extraction</td><td>4-level nested <code>subString</code> parsing of delimited string</td><td><span class="badge medium">Medium</span></td></tr>
+            <tr><td>R4</td><td>Duplicated <code>ExecuteReinDueToNoticeOfLapse</code> logic</td><td>Confirmed verbatim copy across 3 manuscript files</td><td><span class="badge medium">Medium</span></td></tr>
+            <tr><td>R5</td><td>Stale caption/path metadata</td><td>All 25 <code>SP_ACT_PxxIsValid</code> fields carry <code>caption="...DCP8..." path="DC_ACT_P8IsValid"</code> — confirmed in live file</td><td><span class="badge low">Low</span></td></tr>
+            <tr><td>R6</td><td><code>'SP_ACT,P1'</code> typo</td><td>Confirmed live in <strong>both</strong> <code>InProcess_7.1</code> and current <code>DB Scripts_7.2</code> copies of <code>Carrier_SP_BIL_UpdateProjectedServiceCharge</code> — branch never matches</td><td><span class="badge medium">Medium</span></td></tr>
+            <tr><td>R7</td><td>No server-side validation for invalid pay plan</td><td>UI option-hiding only; any API path bypassing UI could set invalid code</td><td><span class="badge high">High</span></td></tr>
+            <tr><td>R8</td><td>Custom installment plans hard-coded per table pair</td><td>No generalized N-table pattern</td><td><span class="badge medium">Medium</span></td></tr>
+            <tr><td>R9</td><td>Two unsynced company-identification mechanisms</td><td><code>ProcessingOrgUnitCode</code> pair vs <code>AccountReference</code> first-letter — could silently disagree</td><td><span class="badge high">High</span></td></tr>
+            <tr><td>R10</td><td><code>IsSafepoint</code>/<code>IsCajun</code>/<code>IsManatee</code> pattern duplicated ≥5×</td><td>4th company or discriminator change needs 5+ coordinated edits</td><td><span class="badge medium">Medium</span></td></tr>
+            <tr><td>R11</td><td><code>DC_ACT_P9</code>-keyed custom installment tables (not <code>SP_ACT_P9</code>)</td><td>Possible dead/demo configuration — unclear whether ever invoked live</td><td><span class="badge medium">Medium</span></td></tr>
+            <tr><td>R12</td><td>No explicit State/LOB-to-PayPlan mapping table</td><td>Eligibility grouping is a validity matrix, not a semantic State/LOB key — cannot be queried by state/LOB directly</td><td><span class="badge medium">Medium</span></td></tr>
+            <tr><td>R13</td><td>Endorsement matrix untested for Cajun/Manatee</td><td><code>SafePoint_Party_Update_2_1_0.xml</code> naming suggests Safepoint-first origin; Cajun/Manatee scenarios may never have been explicitly validated</td><td><span class="badge high">High</span></td></tr>
+            <tr class="gold-row"><td>R14</td><td><span class="badge new">New</span> SC/NC installment gap</td><td><code>SP_ACT_A10</code> validates only <code>P25</code> — SC/NC insureds have no Semi-Annual/Quarterly option under this Account Plan; confirm this is by design, not an incomplete rollout</td><td><span class="badge medium">Medium</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- ============ §15 Gaps ============ -->
+    <details class="card" id="s20">
+      <summary>21 · Gaps and Open Questions</summary>
+      <div class="body">
+        <ol>
+          <li>DDL for core Billing tables not found in codebase (column constraints/indexes unknown from this repo alone).</li>
+          <li>Policy-side <code>PolicyInput.PayPlan</code> → Billing sync path for the <em>initial</em> NBUS pay-plan selection not conclusively traced end-to-end (presumed via <code>BillingIntegrationBuildMessageRequest</code>/<code>Populate_PayPlans</code>, not directly verified).</li>
+          <li>Rewrite (<code>RWRI</code>)/Reissue (<code>REIS</code>) pay-plan handling — not found, only pick-list values.</li>
+          <li>Minimum Premium rules tied to pay plan — not found in Billing; may live purely in Policy Rating.</li>
+          <li>Refund impact of pay plan — no discrete rule set found.</li>
+          <li><code>Carrier_SP_BIL_FirstInvoicePaymentOption</code> and <code>Carrier_SP_BIL_GetPaymentCountAfterCancel</code> — referenced by name/usage but full SQL body not captured in this pass.</li>
+          <li><code>SP_ACT,P1</code> typo status — unclear whether known/accepted or an undiscovered production bug; recommend Production Support confirmation.</li>
+          <li>Downstream Commission/Statement impact of <code>TargetAccountClass</code> changes not verified against Reports/Statements/Commission manuscripts.</li>
+          <li>No explicit State-to-PayPlan or LOB-to-PayPlan lookup table exists as a <em>queryable</em> key — the only structured evidence is the validity matrix, which is a <strong>combination table</strong>, not a semantic state/LOB field.</li>
+          <li>Endorsement matrix functioning correctly for Cajun/Manatee may be accidental (shared code), not deliberately validated — confirm with QA/BA.</li>
+          <li><code>DC_ACT_P9</code> vs <code>SP_ACT_P9</code> custom installment ambiguity — trace whether <code>DC_ACT_P9</code> is ever assigned to a live policy.</li>
+          <li><span class="badge new">New</span> Confirm whether the SC/NC single-plan (<code>P25</code>-only) group is an intentional product decision (e.g., regulatory restriction in those states) or an incomplete build — no comment/annotation in code clarifies intent.</li>
+        </ol>
+      </div>
+    </details>
+
+    <!-- ============ §16 Recommendations ============ -->
+    <details class="card" id="s21">
+      <summary>22 · Recommendations</summary>
+      <div class="body">
+        <ol>
+          <li>Refactor the 25-branch <code>UpdatePayPlan</code> endorsement matrix into a data-driven lookup table (State + Escrow + Mortgagee + Premium-Finance → target Plan Code), mirroring <code>BillClassDependencies</code>/<code>TargetAccountClass</code>.</li>
+          <li>Add explicit <code>onFailure</code> handling to all three <code>AutoPayPlanAssignment</code> call sites.</li>
+          <li>Fix the confirmed-live <code>'SP_ACT,P1'</code> typo in <code>Carrier_SP_BIL_UpdateProjectedServiceCharge</code> after confirming current behavior with Business/QA.</li>
+          <li>Fix the confirmed-live <code>SP_ACT_16/17/18</code> (missing <code>_P</code>) typo in <code>Carrier_Billing_PolicyPlanSetup_Direct_1_0_0_0.xml</code>.</li>
+          <li>Consolidate the triplicated <code>ExecuteReinDueToNoticeOfLapse</code> logic into a single shared manuscript object.</li>
+          <li>Clean up copy-paste metadata artifacts (<code>caption</code>/<code>path</code> referencing <code>DC_ACT_P8</code>) in <code>BillingKeysValidPolicyPlansPrivate</code> fields.</li>
+          <li>Document the Policy-side NBUS pay-plan-selection-to-Billing-sync path explicitly with inline manuscript comments.</li>
+          <li>Add server-side validation on <code>Scheduling_PolicyPlan.PlanCode</code> beyond UI option-hiding.</li>
+          <li>Generalize the Custom Installment Plan mechanism to support N custom plans via a parameterized table structure.</li>
+          <li>Formally document (BRD-level) that Pay Plans are shared across all three underwriting companies — resolves most "difference" questions before they're asked.</li>
+          <li>Consolidate the <code>IsSafepoint</code>/<code>IsCajun</code>/<code>IsManatee</code> discriminator logic into a single reusable object.</li>
+          <li>Reconcile the two independent company-identification mechanisms (<code>ProcessingOrgUnitCode</code> pair vs <code>AccountReference</code> first letter).</li>
+          <li>Investigate and resolve the <code>DC_ACT_P9</code> custom-installment table ambiguity.</li>
+          <li>Add explicit regression test coverage for Cajun and Manatee endorsement scenarios against the <code>UpdatePayPlan</code> matrix.</li>
+          <li><span class="badge new">New</span> Confirm and document the business rationale for SC/NC's single-plan (<code>P25</code>-only) restriction; if unintentional, scope adding Semi-Annual/Quarterly siblings for those states.</li>
+          <li>If State/LOB-based Pay Plan restriction beyond the current validity matrix is a real business requirement, add an explicit queryable State/LOB key to the Pay Plan tables.</li>
+          <li>Perform a follow-up broader table-name grep across Commission, Disbursement, and FollowUp subsystems for hidden company-specific logic.</li>
+        </ol>
+      </div>
+    </details>
+
+    <!-- ============ §17 Test Scenarios ============ -->
+    <details class="card" id="s22">
+      <summary>23 · Test Scenario Recommendations</summary>
+      <div class="body">
+
+        <h3>New Business</h3>
+        <ol>
+          <li>Bind NBUS on each <code>SP_ACT_Pxx</code> plan across FL/LA/TX/AL/MS/SC/NC — confirm down payment %, ISTP fee, first invoice amount match <code>BillClassDependencies</code> expectations.</li>
+          <li>Bind NBUS with <code>SP_ACT_P4</code> (9-Pay) on a non-Advantage FL policy — confirm option is <strong>not selectable</strong>.</li>
+          <li>Bind NBUS with partial first payment (e.g. 40% of premium on an Annual plan) — confirm <code>AutoPayPlanAssignment</code> reassigns correctly per state formula.</li>
+          <li><span class="badge new">New</span> Attempt to select a Semi-Annual/Quarterly plan for an SC/NC (<code>SP_ACT_A10</code>) account — confirm the system correctly offers <strong>only</strong> <code>P25</code> and does not expose a non-existent installment option.</li>
+        </ol>
+
+        <h3>Renewal</h3>
+        <ol start="5">
+          <li>Renew a policy on <code>SP_ACT_P2</code> — confirm auto-select to <code>SP_ACT_P1</code>.</li>
+          <li>Renew a policy on <code>SP_ACT_P5</code> (Mortgagee) — confirm no auto-plan-change; <code>RenewalConfigTemplate</code> nulled.</li>
+          <li>Renew a policy on <code>SP_ACT_P9</code> (Premium Finance) — same as above.</li>
+        </ol>
+
+        <h3>Endorsement</h3>
+        <ol start="8">
+          <li>Add First Mortgagee to a FL policy with Escrow=1 on <code>SP_ACT_A1</code>/<code>P1</code> — confirm switch to <code>SP_ACT_A2</code>/<code>P5</code>.</li>
+          <li>Remove First Mortgagee from a FL policy on <code>SP_ACT_A2</code>/<code>P5</code> — confirm reversion to <code>SP_ACT_A1</code>/<code>P1</code>.</li>
+          <li>Add Premium Finance company on LA/TX/FL policy — confirm switch to <code>SP_ACT_A4</code>/<code>P9</code>, reversion on delete.</li>
+          <li>Repeat for LA/TX (Advantage &amp; non-Advantage), AL, MS, SC/NC branches — full state matrix regression.</li>
+        </ol>
+
+        <h3>Cancellation / Reinstatement</h3>
+        <ol start="12">
+          <li>Flat-cancel (FCAN) with outstanding ISTP charge, no payment allocation — confirm write-off.</li>
+          <li>Flat-cancel with active payment allocation against ISTP — confirm suspend-payment path.</li>
+          <li>Reinstate (REIN) a policy with previously written-off ISTP — confirm reversal.</li>
+          <li>Simulate Flat-Cancelled, NOL=1, due date within 15 days, sufficient suspense — confirm automatic Reinstate fires without user action.</li>
+        </ol>
+
+        <h3>Payment / Invoice</h3>
+        <ol start="16">
+          <li>Apply a payment exactly matching a plan's Quarterly threshold — confirm boundary condition (<code>&gt;=</code> vs <code>&lt;</code>).</li>
+          <li>Apply payment via Batch / Single / Unidentified-Payment-Identified — confirm all three call sites invoke <code>AutoPayPlanAssignment</code> consistently.</li>
+          <li>Generate first invoice for a Full Pay policy — confirm 2-Pay/4-Pay alternate options presented.</li>
+          <li>Generate invoice for balance below state <code>InvoiceThreshold</code> — confirm invoice suppressed.</li>
+        </ol>
+
+        <h3>Negative / Regression</h3>
+        <ol start="20">
+          <li>Select an <code>SP_ACT_Pxx</code> plan not in <code>ValidAccountAndPolicyPlanCombinations</code> for the current Account Plan — confirm option hidden/disabled.</li>
+          <li>Force <code>AutoPayPlanAssignment</code> to fail/return no rows — confirm silent no-op does not corrupt the existing plan code.</li>
+          <li>Submit an Endorsement outside FL/LA/TX/AL/MS/SC/NC matrix conditions — confirm no unintended plan change occurs.</li>
+          <li>Full regression: 25 <code>SP_ACT_Pxx</code> × 8 transaction types — prioritize the ~25 combos explicitly coded in <code>UpdatePayPlan</code> first.</li>
+        </ol>
+
+        <h3>Company (Safepoint / Cajun / Manatee)</h3>
+        <ol start="24">
+          <li>New Business, Safepoint policy, Plan <code>SP_ACT_P2</code> — standard Safepoint templates render; <code>SFPQueueAttachments</code> used.</li>
+          <li>New Business, Cajun policy, same Plan <code>SP_ACT_P2</code> — identical installment math; <code>_CJN.doc</code> templates; <code>CJNQueueAttachments</code>; "Cajun " activity log prefix.</li>
+          <li>New Business, Manatee policy, same Plan <code>SP_ACT_P2</code> — identical installment math; <code>MIE NTC</code>/<code>_MNT.doc</code> templates; <code>MNTQueueAttachments</code>.</li>
+          <li><code>AccountReference</code> doesn't start with S/C/M (data migration artifact) — verify graceful handling, not a hard failure.</li>
+          <li><code>ProcessingOrgUnitCode=8888</code> (Cajun) but <code>AccountReference</code> starts with "S" — verify which discriminator wins.</li>
+          <li>Trigger ENDT plan-switch matrix on a Cajun/Manatee policy — verify Safepoint-named matrix actually fires correctly.</li>
+        </ol>
+
+        <h3>LOB</h3>
+        <ol start="30">
+          <li>Same Pay Plan (e.g. <code>SP_ACT_P3</code>) across different LOBs (HO3 vs DP1) — down payment %, installment count, due dates should be identical.</li>
+          <li>Trigger cancellation notice for LOB = <code>TWIAWindOnly</code> — verify correct form code <code>SIC NTC 0405 05 17</code> selected.</li>
+          <li>Trigger cancellation notice with an unmapped LOB value — verify safe <code>otherwise</code> fallback.</li>
+          <li>Bind NBUS on <code>SP_ACT_P1</code> with LOB = <code>HomeownersAdvantage</code> — confirm the <code>AutoPayPlanAssignment</code> fee add-on correctly swaps to <code>MIN(Premium × 0.18, 10)</code> instead of the flat $13.</li>
+        </ol>
+
+      </div>
+    </details>
+
+    <footer style="margin-top:30px; padding:16px; text-align:center; color:var(--muted); font-size:12px; border-top:1px solid var(--border);">
+      <p>Source: <code>Billing_PayPlans_Complete_Skill.md</code> (Codebase scope: <code>f:\DuckCreek\Billing</code>) — every fact traceable to the uploaded skill file.</p>
+    </footer>
+
+  </main>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Duck Creek Billing — Installment Scheduling &amp; Invoice Generation (v2.0)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+/* ---------- Palette (blue dominant + gold accent) ---------- */
+:root{
+  --navy:#0b2545;
+  --navy-2:#13315c;
+  --blue:#1d3d73;
+  --teal:#0f8b8d;
+  --cyan:#2ec4d3;
+  --panel:#eef4fb;
+  --panel-2:#dbe7f5;
+  --white:#ffffff;
+  --ink:#0e1a2b;
+  --ink-2:#2a3b52;
+  --muted:#5c6b81;
+  --line:#c9d6e6;
+  --gold:#c9a227;
+  --gold-2:#e8c547;
+  --gold-soft:#fff4c4;
+  --danger:#a03030;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--panel);color:var(--ink);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+a{color:var(--teal);text-decoration:none}
+a:hover{text-decoration:underline}
+code,pre{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:12.5px}
+code{background:#e6eef8;color:var(--navy);padding:1px 5px;border-radius:3px}
+
+/* ---------- Layout ---------- */
+.wrap{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+aside{
+  position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);
+  color:#e7eefa;padding:18px 14px 30px;border-right:3px solid var(--gold);
+}
+aside h1{font-size:15px;margin:0 0 4px;color:var(--white);letter-spacing:.3px}
+aside .sub{font-size:11.5px;color:#b9c8de;margin-bottom:14px}
+aside .badge{display:inline-block;background:var(--gold);color:var(--navy);font-weight:700;font-size:10.5px;padding:2px 7px;border-radius:10px;margin-right:4px}
+aside nav ol{list-style:none;padding:0;margin:8px 0 0;counter-reset:sec}
+aside nav ol > li{counter-increment:sec;margin:1px 0}
+aside nav a{
+  display:block;color:#cfdcf0;padding:6px 8px;border-radius:5px;font-size:12.5px;line-height:1.35;
+  border-left:3px solid transparent;
+}
+aside nav a:before{content:counter(sec) ". ";color:var(--gold-2);font-weight:700}
+aside nav a:hover{background:#1c3a67;color:var(--white);text-decoration:none;border-left-color:var(--cyan)}
+aside .foot{margin-top:18px;font-size:11px;color:#98abc7;border-top:1px solid #1c3a67;padding-top:10px}
+
+main{padding:22px 30px 60px;max-width:1200px}
+
+/* ---------- Header ---------- */
+header.doc-hdr{
+  background:linear-gradient(120deg,var(--navy) 0%,var(--blue) 100%);
+  color:var(--white);border-radius:8px;padding:22px 26px;border:1px solid var(--navy-2);
+  box-shadow:0 2px 10px rgba(11,37,69,.15);
+}
+header.doc-hdr h1{margin:0 0 6px;font-size:22px;letter-spacing:.2px}
+header.doc-hdr .tagline{color:#dae6f7;font-size:13px;margin-bottom:14px}
+header.doc-hdr .pills{display:flex;flex-wrap:wrap;gap:8px}
+header.doc-hdr .pill{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);color:#eaf1fb;padding:5px 10px;border-radius:14px;font-size:12px}
+header.doc-hdr .pill b{color:var(--gold-2)}
+header.doc-hdr .pill.gold{background:var(--gold);color:var(--navy);border-color:var(--gold-2)}
+header.doc-hdr .pill.gold b{color:var(--navy)}
+
+/* ---------- Stat strip ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 4px}
+.stat{background:var(--white);border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:6px;padding:10px 12px}
+.stat .n{font-size:20px;font-weight:700;color:var(--navy)}
+.stat .l{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+.stat.gold{border-left-color:var(--gold)}
+.stat.gold .n{color:var(--navy)}
+
+/* ---------- Collapsible cards ---------- */
+details.card{
+  background:var(--white);border:1px solid var(--line);border-radius:8px;margin:14px 0;
+  box-shadow:0 1px 3px rgba(11,37,69,.05);overflow:hidden;
+}
+details.card > summary{
+  cursor:pointer;list-style:none;padding:12px 16px;background:linear-gradient(180deg,#f4f8fd 0%,#e5eef8 100%);
+  border-bottom:1px solid var(--line);font-weight:600;color:var(--navy);font-size:15px;
+  display:flex;align-items:center;gap:10px;
+}
+details.card > summary::-webkit-details-marker{display:none}
+details.card > summary:before{
+  content:"▸";color:var(--teal);font-weight:700;transition:transform .15s ease;display:inline-block;width:14px
+}
+details.card[open] > summary:before{transform:rotate(90deg)}
+details.card > summary .num{
+  background:var(--navy);color:var(--white);font-size:11.5px;padding:2px 8px;border-radius:10px;font-weight:700;
+}
+details.card > summary .tag-gold{
+  background:var(--gold);color:var(--navy);font-size:10.5px;padding:2px 7px;border-radius:9px;font-weight:700;margin-left:auto
+}
+details.card .body{padding:16px 18px}
+
+/* ---------- Typography inside cards ---------- */
+.body h3{color:var(--blue);margin:18px 0 6px;font-size:14.5px;border-bottom:1px dashed var(--line);padding-bottom:3px}
+.body h4{color:var(--navy-2);margin:12px 0 4px;font-size:13.5px}
+.body p{margin:6px 0}
+.body ul,.body ol{margin:6px 0 8px 20px;padding:0}
+.body li{margin:2px 0}
+.callout{
+  border-left:4px solid var(--gold);background:var(--gold-soft);
+  padding:10px 12px;border-radius:0 5px 5px 0;margin:10px 0;font-size:13px;color:#4a3a05
+}
+.callout b{color:#6b5008}
+.info{
+  border-left:4px solid var(--teal);background:#e8f6f7;
+  padding:10px 12px;border-radius:0 5px 5px 0;margin:10px 0;font-size:13px;color:#0a4547
+}
+.note{
+  border-left:4px solid var(--muted);background:#eef2f7;
+  padding:10px 12px;border-radius:0 5px 5px 0;margin:10px 0;font-size:12.5px;color:var(--ink-2)
+}
+
+/* ---------- Tables ---------- */
+table.dc{
+  width:100%;border-collapse:collapse;margin:10px 0 12px;background:var(--white);
+  border:1px solid var(--line);border-radius:6px;overflow:hidden;font-size:12.7px;
+}
+table.dc th{
+  background:var(--navy);color:var(--white);text-align:left;padding:8px 10px;font-weight:600;font-size:12.5px;
+  border-right:1px solid var(--navy-2);vertical-align:top
+}
+table.dc td{
+  padding:7px 10px;border-top:1px solid var(--line);vertical-align:top;border-right:1px solid #e6ecf4
+}
+table.dc tr:nth-child(even) td{background:#f7fafd}
+table.dc tr:hover td{background:#eef4fb}
+table.dc td code{background:#e6eef8;padding:1px 5px;border-radius:3px}
+
+/* Gold badges for override/customisation/typos */
+.b-gold{
+  background:var(--gold);color:var(--navy);font-weight:700;font-size:10.5px;
+  padding:1px 6px;border-radius:9px;letter-spacing:.2px
+}
+.b-blue{
+  background:var(--teal);color:var(--white);font-weight:700;font-size:10.5px;
+  padding:1px 6px;border-radius:9px;letter-spacing:.2px
+}
+.b-navy{
+  background:var(--navy);color:var(--white);font-weight:700;font-size:10.5px;
+  padding:1px 6px;border-radius:9px;letter-spacing:.2px
+}
+.b-red{
+  background:var(--danger);color:var(--white);font-weight:700;font-size:10.5px;
+  padding:1px 6px;border-radius:9px;letter-spacing:.2px
+}
+tr.override td:first-child{border-left:4px solid var(--gold)}
+
+/* ---------- Verbatim XML blocks ---------- */
+pre.xml{
+  background:#0e1e35;color:#e6edf7;border-radius:6px;padding:12px 14px;overflow-x:auto;font-size:12px;line-height:1.5;
+  border:1px solid #0a1728;margin:8px 0
+}
+pre.xml .k{color:var(--gold-2)}
+pre.xml .s{color:#a5d8ff}
+pre.xml .c{color:#8095b0;font-style:italic}
+
+/* ---------- Diagrams (pure HTML/CSS/SVG) ---------- */
+.diagram{
+  background:linear-gradient(180deg,#f4f8fd,#eaf1fa);
+  border:1px solid var(--line);border-radius:8px;padding:16px;margin:10px 0 14px;overflow-x:auto
+}
+.diagram .cap{font-size:12px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+
+/* Node box style */
+.node{
+  display:inline-block;background:var(--white);border:1.5px solid var(--blue);color:var(--navy);
+  padding:8px 12px;border-radius:6px;font-size:12.5px;font-weight:600;
+  box-shadow:0 1px 3px rgba(11,37,69,.08);text-align:center;min-width:180px;
+}
+.node.root{background:var(--navy);color:var(--white);border-color:var(--navy)}
+.node.override{border-color:var(--gold);background:var(--gold-soft);color:#4a3a05}
+.node.override:before{content:"OVERRIDE ";color:var(--gold);font-weight:800;font-size:10px}
+.node.decision{background:var(--gold-soft);border-color:var(--gold);color:#4a3a05;border-radius:16px}
+.node.small{min-width:120px;padding:6px 10px;font-size:11.5px}
+.node.terminal{background:var(--teal);color:var(--white);border-color:var(--teal)}
+
+/* Tree diagram (D1) */
+.tree{font-family:"SFMono-Regular",Consolas,monospace;font-size:12.5px;line-height:1.7;color:var(--navy)}
+.tree .root-lbl{color:var(--white);background:var(--navy);padding:2px 8px;border-radius:4px;font-weight:700}
+.tree .inh{color:var(--muted)}
+.tree .arrow{color:var(--teal);font-weight:700}
+.tree .over{color:#8a6a05;background:var(--gold-soft);padding:1px 6px;border-radius:4px;border:1px solid var(--gold-2);font-weight:600}
+
+/* Flow diagram (D2 & D4) — vertical steps */
+.flow{display:flex;flex-direction:column;align-items:center;gap:0}
+.flow .step{display:flex;justify-content:center;width:100%}
+.flow .arr{width:2px;height:22px;background:var(--blue);position:relative;margin:2px 0}
+.flow .arr:after{
+  content:"";position:absolute;bottom:-1px;left:-5px;
+  border:6px solid transparent;border-top-color:var(--blue);width:0;height:0
+}
+.flow .branch{display:flex;gap:24px;width:100%;justify-content:center}
+.flow .branch .col{display:flex;flex-direction:column;align-items:center}
+.side-note{font-size:11.5px;color:var(--muted);font-style:italic;margin-top:4px;max-width:220px;text-align:center}
+
+/* Decision tree (D3) - use SVG for a wider view */
+svg.d3{width:100%;max-width:1100px;height:auto;display:block;margin:0 auto}
+
+/* Ranked layers (D5) */
+.layers{display:flex;flex-direction:column;gap:6px;max-width:720px;margin:8px 0}
+.layers .layer{
+  display:grid;grid-template-columns:44px 1fr;align-items:center;
+  border:1.5px solid var(--blue);border-radius:6px;background:var(--white);overflow:hidden
+}
+.layers .layer .rank{
+  background:var(--navy);color:var(--white);text-align:center;padding:12px 0;font-weight:700;font-size:15px;
+}
+.layers .layer .txt{padding:8px 12px;font-size:13px;color:var(--ink)}
+.layers .layer.override{border-color:var(--gold);background:var(--gold-soft)}
+.layers .layer.override .rank{background:var(--gold);color:var(--navy)}
+.layers .layer.override .txt{color:#4a3a05}
+
+/* Print */
+@media print{
+  aside{display:none}
+  .wrap{grid-template-columns:1fr}
+  details.card{break-inside:avoid;box-shadow:none}
+  details.card{page-break-inside:avoid}
+  main{padding:0 12px}
+  details.card[open] > summary:before{content:""}
+  details.card{border:1px solid #999}
+  header.doc-hdr{background:#fff;color:#000;border:1px solid #999}
+  header.doc-hdr .pill{border:1px solid #999;color:#000;background:#eee}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ==================== SIDEBAR ==================== -->
+<aside>
+  <h1>Installment &amp; Invoice Generation</h1>
+  <div class="sub">Duck Creek Billing · <span class="badge">v2.0</span><span class="badge" style="background:var(--cyan);color:var(--navy)">Code-verified</span></div>
+  <nav>
+    <ol>
+      <li><a href="#s1">Scope, Method &amp; Evidence Standard</a></li>
+      <li><a href="#s2">Framework Overview (ManuScript primitives)</a></li>
+      <li><a href="#s3">Manuscript Inheritance Graph</a></li>
+      <li><a href="#s4">End-to-End Process Flow</a></li>
+      <li><a href="#s5">Installment Generation</a></li>
+      <li><a href="#s6">Invoice Generation</a></li>
+      <li><a href="#s7">Transaction Impact on Billing</a></li>
+      <li><a href="#s8">Invoice Recovery (Custom)</a></li>
+      <li><a href="#s9">Billing Schedules</a></li>
+      <li><a href="#s10">Error Handling</a></li>
+      <li><a href="#s11">Company / LOB Differences</a></li>
+      <li><a href="#s12">Custom Coding &amp; Gotchas</a></li>
+      <li><a href="#s13">Production Support (Symptom → Location)</a></li>
+      <li><a href="#s14">Change Log (v1 → v2)</a></li>
+      <li><a href="#s15">Gaps &amp; Risks</a></li>
+    </ol>
+  </nav>
+
+</aside>
+
+<!-- ==================== MAIN ==================== -->
+<main>
+
+<header class="doc-hdr">
+  <h1>Duck Creek Billing — Installment Scheduling &amp; Invoice Generation</h1>
+  <div class="tagline">Codebase-verified analysis of the Safepoint / Cajun / Manatee ManuScript layer. Every claim is traced to a specific manuscript file, table, or stored-procedure reference.</div>
+  <div class="pills">
+    <span class="pill"><b>Version:</b> v2.0</span>
+    <span class="pill"><b>Generated:</b> Aug 10, 2026</span>
+    <span class="pill"><b>Source of truth:</b> <code style="background:transparent;color:#f7e69a">f:\DuckCreek\Billing</code></span>
+    <span class="pill gold"><b>Codebase-verified</b></span>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="n">17</div><div class="l">Evidence-bearing files</div></div>
+  <div class="stat"><div class="n">11</div><div class="l">Carrier overlays confirmed</div></div>
+  <div class="stat"><div class="n">3</div><div class="l"><code>GenerateInvoiceReturnCode</code> keys</div></div>
+  <div class="stat"><div class="n">3+1</div><div class="l">Delivery channels (PA/EFT/EFTC + EI overlay)</div></div>
+  <div class="stat"><div class="n">12</div><div class="l">Transaction codes covered</div></div>
+  <div class="stat"><div class="n">3</div><div class="l">Companies (SIC / CIC / MIE)</div></div>
+  <div class="stat gold"><div class="n">10</div><div class="l">Gaps / risks flagged</div></div>
+  <div class="stat gold"><div class="n">15</div><div class="l">Change-log entries</div></div>
+</div>
+
+<!-- ================ S1 ================ -->
+<details class="card" id="s1" open>
+  <summary><span class="num">§0</span> Scope, Method &amp; Evidence Standard</summary>
+  <div class="body">
+    <p>This document is a code-grounded analysis of <b>Installment Scheduling</b> and <b>Invoice Generation</b> in the Safepoint / Cajun / Manatee Duck Creek Billing implementation. Every claim below is traced to a specific ManuScript file, table, or stored-procedure reference in the repository. Where the codebase does not confirm a claim, it is explicitly flagged <span class="b-gold">Not Found in Codebase</span>.</p>
+    <h3>Evidence-bearing files (17)</h3>
+    <table class="dc">
+      <thead><tr><th style="width:26%">Area</th><th style="width:44%">File</th><th style="width:30%">Root property (<code>manuscriptID</code> → <code>inherited</code>)</th></tr></thead>
+      <tbody>
+        <tr><td>Frequency / date builder</td><td><code>Billing/ManuScripts/Billing/Billing/Scheduling/Billing_Frequency_Calculator_1_0_0_0.xml</code></td><td><code>Billing_Frequency_Calculator_1_0_0_0</code> → <code>Carrier_Billing_Base_Data_1_0_0_0</code></td></tr>
+        <tr><td>Monthly frequency variant</td><td><code>Billing/ManuScripts/Billing/Billing/Scheduling/Billing_Frequency_Calculator_Monthly_1_0_0_0.xml</code></td><td><code>Billing_Frequency_Calculator_Monthly_1_0_0_0</code> → <code>Carrier_Billing_Frequency_Calculator_1_0_0_0</code></td></tr>
+        <tr><td>Installment amount splitter</td><td><code>Billing/ManuScripts/Billing/Billing/Scheduling/Billing_InstallmentAmounts_Calculator_1_0_0_0.xml</code></td><td><code>Billing_InstallmentAmounts_Calculator_1_0_0_0</code> → <code>Carrier_Billing_Base_Data_1_0_0_0</code></td></tr>
+        <tr><td>Reusable date-calc helper</td><td><code>Billing/ManuScripts/Billing/Billing/Scheduling/Billing_Scheduling_DateCalculator_1_0_0_0.xml</code></td><td><code>Billing_Scheduling_DateCalculator_1_0_0_0</code> → <i>(none — root)</i></td></tr>
+        <tr><td>Schedule override plan</td><td><code>Billing/ManuScripts/Billing/Billing/Scheduling/Billing_Schedule_Override_Plan_1_0_0_0.xml</code></td><td><code>Billing_Schedule_Override_Plan_1_0_0_0</code> → <code>Carrier_Billing_Schedule_Override_Data_1_0_0_0</code></td></tr>
+        <tr><td>Schedule override data</td><td><code>Billing/ManuScripts/Billing/Billing/Scheduling/Billing_Schedule_Override_Data_1_0_0_0.xml</code></td><td><code>Billing_Schedule_Override_Data_1_0_0_0</code> → <i>(none — root)</i></td></tr>
+        <tr><td>Installment schedule (v1)</td><td><code>Billing/ManuScripts/Billing/Billing/Installments/Billing_Installment_Schedule_1_0_0_0.xml</code></td><td><code>Billing_Installment_Schedule_1_0_0_0</code> → <code>Carrier_Billing_Policy_Account_Common_1_0_0_0</code></td></tr>
+        <tr><td>Installment schedule (v3)</td><td><code>Billing/ManuScripts/Billing/Billing/Installments/Billing_Installment_Schedule_3_0_0_0.xml</code></td><td><code>Billing_Installment_Schedule_3_0_0_0</code> → <code>Carrier_Billing_Policy_Account_Common_1_0_0_0</code></td></tr>
+        <tr><td>Projected schedule</td><td><code>Billing/ManuScripts/Billing/Billing/Installments/Billing_Projected_Installment_Schedule_1_0_0_0.xml</code></td><td><code>Billing_Projected_Installment_Schedule_1_0_0_0</code> → <code>Carrier_Billing_Policy_Account_Common_1_0_0_0</code></td></tr>
+        <tr><td>Invoice generation engine</td><td><code>Billing/ManuScripts/Billing/Billing/Invoice/Billing_InvoiceData_1_0_0_0.xml</code></td><td><code>Billing_InvoiceData_1_0_0_0</code> → <i>(none — root)</i></td></tr>
+        <tr class="override"><td>Invoice form</td><td><code>Billing/ManuScripts/Billing/Billing/Invoice/Billing_InvoiceForm_1_0_0_0.xml</code></td><td><code>Billing_InvoiceForm_1_0_0_0</code> → <code>Carrier_Billing_InvoiceData_1_0_0_0</code> <span class="b-gold">unusual: form → carrier data (§11.D)</span></td></tr>
+        <tr><td>Email invoice data</td><td><code>Billing/ManuScripts/Billing/Billing/Invoice/Billing_EmailInvoiceData_1_0_0_0.xml</code></td><td><code>Billing_EmailInvoiceData_1_0_0_0</code> → <i>(none — root)</i></td></tr>
+        <tr><td>Debit change notice</td><td><code>Billing/ManuScripts/Billing/Billing/Invoice/Billing_Debit_Change_Notice_1_0_0_0.xml</code></td><td><code>Billing_Debit_Change_Notice_1_0_0_0</code> → <i>(none — root)</i></td></tr>
+        <tr><td>Claims-account invoice data</td><td><code>Billing/ManuScripts/Billing/Billing/Invoice/Billing_ClaimsAccountInvoiceData_1_0_0_0.xml</code></td><td><code>Billing_ClaimsAccountInvoiceData_1_0_0_0</code> → <i>(none — root)</i></td></tr>
+        <tr><td>Post-policy hook</td><td><code>Billing/ManuScripts/Billing/CarrierBilling/Base/Carrier_Billing_Events_PolicyTerm_Post_Actions_1_0_0_0.xml</code></td><td><code>Carrier_Billing_Events_PolicyTerm_Post_Actions_1_0_0_0</code> → <code>Billing_Events_PolicyTerm_Post_Actions_1_0_0_0</code></td></tr>
+        <tr><td>Company / form discriminator</td><td><code>Billing/ManuScripts/Billing/CarrierBilling/Base/Carrier_Forms_Letters_Manuscript_1_0_0_0.xml</code></td><td>(contains <code>FormTableDataPrivate.IsSafepoint / IsCajun / IsManatee</code>)</td></tr>
+        <tr><td>Async retry harness</td><td><code>Billing/ManuScripts/AutomatedProcess/CarrierAdmin/AsyncRetry/Carrrier_AutomatedAsyncRetry.xml</code> <span class="b-gold">filename typo (triple r)</span></td><td><code>Carrier_AutomatedProcess_AsyncRetry</code> → <code>DCT_AutomatedProcess_AsyncRetry</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<!-- ================ S2 ================ -->
+<details class="card" id="s2">
+  <summary><span class="num">§1</span> Framework Overview — Duck Creek ManuScript Primitives</summary>
+  <div class="body">
+    <p>Before the domain sections it is worth naming the runtime primitives that appear throughout — this document quotes them directly from the code and expects the reader to recognise them.</p>
+
+    <h3>ManuScript root</h3>
+    <p>Every <code>.xml</code> under <code>Billing/ManuScripts/**</code> opens with <code>&lt;properties manuscriptID="…" inherited="…" versionDate="…"&gt;</code>. The <code>inherited=</code> attribute is the <b>single authoritative</b> parent link. <code>inherited=""</code> means the manuscript is a root.</p>
+    <p><b>Confirmed roots:</b> <code>Billing_InvoiceData_1_0_0_0</code>, <code>Billing_Scheduling_DateCalculator_1_0_0_0</code>, <code>Billing_Schedule_Override_Data_1_0_0_0</code>, <code>Billing_EmailInvoiceData_1_0_0_0</code>, <code>Billing_Debit_Change_Notice_1_0_0_0</code>, <code>Billing_ClaimsAccountInvoiceData_1_0_0_0</code>, <code>DCT_AutomatedProcess_Base</code>, <code>DCT_AutomatedProcess_AsyncRetry</code>.</p>
+
+    <h3>Field kinds</h3>
+    <ul>
+      <li><code>&lt;public …&gt;</code> — externally addressable field; usually bound to an XPath (<code>path="@…"</code> or <code>path="…"</code>) into the session document.</li>
+      <li><code>&lt;private …&gt;</code> — internal-only computed field; the <code>&lt;value&gt;</code> block is the calculation.</li>
+      <li><code>&lt;request verb="…"&gt;</code> — dispatches a verb-based request (e.g. <code>BillInvoice.getInvoiceDataAsXMLRq</code>, <code>Session.setLeafRq</code>, <code>StoredProc.callStoredProcRq</code>).</li>
+      <li><code>&lt;iterator …&gt;</code> (<code>Request.loopRq</code> in usage) — bounded loop; iteration count is a <code>&lt;nameValue name="iterations" …&gt;</code>.</li>
+      <li><code>&lt;lookup&gt;</code> + <code>&lt;table id="…" tableType="local"&gt;</code> — inline lookup table with <code>&lt;rowKeys&gt;</code> and <code>&lt;data&gt;</code> rows; <code>tableType="local"</code> means the table is defined in the manuscript itself.</li>
+      <li><code>&lt;affects&gt;&lt;reference idref="…" effect="preEffect|postEffect|setValue"/&gt;&lt;/affects&gt;</code> — ordered side-effects that fire relative to the field's own evaluation.</li>
+    </ul>
+
+    <h3>Comparison operators</h3>
+    <p><code>&lt;comparison compare="eq|ne|gt|lt|le|and|or|is"&gt;</code> with <code>&lt;operand&gt;</code> children. Literals: <code>&lt;operand type="string" value="…"/&gt;</code> or <code>&lt;operand type="int" value="…"/&gt;</code>.</p>
+
+    <h3>Date math</h3>
+    <p><code>&lt;dateAdd subtract="1"&gt;&lt;dateArgument .../&gt;&lt;dateUnit … unit="days"/&gt;&lt;/dateAdd&gt;</code> — <code>subtract="1"</code> flips add → subtract.</p>
+
+    <h3>Return-code pattern</h3>
+    <p>A <code>&lt;table id="…ReturnCode" tableType="local"&gt;</code> enumerates named keys, and <code>&lt;lookup&gt;&lt;tableRef …/&gt;&lt;fieldRef value="ReturnCode"/&gt;&lt;keyRef … name="Status"/&gt;&lt;/lookup&gt;</code> writes a status back onto the response.</p>
+
+    <h3>Carrier override pattern <span class="b-gold">override</span></h3>
+    <p>Each base rule set has a companion <code>CarrierRules_&lt;Feature&gt;</code> object with two boolean switches:</p>
+    <ul>
+      <li><code>CarrierRules_&lt;Feature&gt;.OverrideBaseRules</code> — if <code>True</code>, carrier rules <b>replace</b> base entirely.</li>
+      <li><code>CarrierRules_&lt;Feature&gt;.AddAdditionalRules</code> — if <code>True</code>, carrier rules run <b>in addition to</b> base (gated on <code>data.ErrorCode ≤ 0</code>).</li>
+    </ul>
+    <div class="callout"><b>Both switches default to <code>False</code></b> in the base manuscripts (<code>Billing_Frequency_Calculator_1_0_0_0</code>, <code>Billing_InstallmentAmounts_Calculator_1_0_0_0</code>) — no live carrier override active for the amount split.</div>
+  </div>
+</details>
+
+<!-- ================ S3 ================ -->
+<details class="card" id="s3">
+  <summary><span class="num">§2</span> Manuscript Inheritance Graph (Installment &amp; Invoice) <span class="tag-gold">Diagram D1</span></summary>
+  <div class="body">
+    <p>Only edges confirmed in <code>&lt;properties inherited="…"&gt;</code> are shown. "└─ inh" = inherited from.</p>
+
+    <div class="diagram">
+      <div class="cap">Diagram D1 — Inheritance edges (static)</div>
+      <div class="tree">
+<span class="root-lbl">Billing_Frequency_Calculator_1_0_0_0</span><br/>
+&nbsp;&nbsp;&nbsp;<span class="inh">└─ inh</span> <span class="arrow">→</span> Carrier_Billing_Base_Data_1_0_0_0<br/><br/>
+
+<span class="root-lbl">Billing_Frequency_Calculator_Monthly_1_0_0_0</span><br/>
+&nbsp;&nbsp;&nbsp;<span class="inh">└─ inh</span> <span class="arrow">→</span> Carrier_Billing_Frequency_Calculator_1_0_0_0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="inh">(carrier overlay of Billing_Frequency_Calculator_1_0_0_0)</span><br/><br/>
+
+<span class="root-lbl">Billing_InstallmentAmounts_Calculator_1_0_0_0</span><br/>
+&nbsp;&nbsp;&nbsp;<span class="inh">└─ inh</span> <span class="arrow">→</span> Carrier_Billing_Base_Data_1_0_0_0<br/><br/>
+
+<span class="root-lbl">Billing_Scheduling_DateCalculator_1_0_0_0</span> &nbsp;&nbsp;<span class="over">ROOT (inherited="")</span><br/>
+<span class="root-lbl">Billing_Schedule_Override_Data_1_0_0_0</span> &nbsp;&nbsp;<span class="over">ROOT (inherited="")</span><br/><br/>
+
+<span class="root-lbl">Billing_Schedule_Override_Plan_1_0_0_0</span><br/>
+&nbsp;&nbsp;&nbsp;<span class="inh">└─ inh</span> <span class="arrow">→</span> Carrier_Billing_Schedule_Override_Data_1_0_0_0<br/><br/>
+
+<span class="root-lbl">Billing_Installment_Schedule_1_0_0_0</span><br/>
+<span class="root-lbl">Billing_Installment_Schedule_3_0_0_0</span><br/>
+<span class="root-lbl">Billing_Projected_Installment_Schedule_1_0_0_0</span><br/>
+&nbsp;&nbsp;&nbsp;<span class="inh">└─ inh</span> <span class="arrow">→</span> Carrier_Billing_Policy_Account_Common_1_0_0_0 <span class="inh">(all three)</span><br/><br/>
+
+<span class="root-lbl">Billing_InvoiceData_1_0_0_0</span> &nbsp;&nbsp;<span class="over">ROOT (inherited="")</span><br/>
+<span class="root-lbl">Billing_ClaimsAccountInvoiceData_1_0_0_0</span> &nbsp;&nbsp;<span class="over">ROOT (inherited="")</span><br/>
+<span class="root-lbl">Billing_EmailInvoiceData_1_0_0_0</span> &nbsp;&nbsp;<span class="over">ROOT (inherited="")</span><br/>
+<span class="root-lbl">Billing_Debit_Change_Notice_1_0_0_0</span> &nbsp;&nbsp;<span class="over">ROOT (inherited="")</span><br/><br/>
+
+<span class="root-lbl">Billing_InvoiceForm_1_0_0_0</span><br/>
+&nbsp;&nbsp;&nbsp;<span class="inh">└─ inh</span> <span class="arrow">→</span> Carrier_Billing_InvoiceData_1_0_0_0 &nbsp;<span class="over">note: form → carrier data (§11.D)</span><br/><br/>
+
+<span class="root-lbl">Billing_ClaimsAccountInvoiceForm_1_0_0_0</span><br/>
+&nbsp;&nbsp;&nbsp;<span class="inh">└─ inh</span> <span class="arrow">→</span> Carrier_Billing_ClaimsAccountInvoiceData_1_0_0_0<br/><br/>
+
+<span class="root-lbl">Carrier_Billing_Events_PolicyTerm_Post_Actions_1_0_0_0</span><br/>
+&nbsp;&nbsp;&nbsp;<span class="inh">└─ inh</span> <span class="arrow">→</span> Billing_Events_PolicyTerm_Post_Actions_1_0_0_0<br/><br/>
+
+<span class="root-lbl">Carrier_AutomatedProcess_AsyncRetry</span><br/>
+&nbsp;&nbsp;&nbsp;<span class="inh">└─ inh</span> <span class="arrow">→</span> DCT_AutomatedProcess_AsyncRetry &nbsp;<span class="over">thin empty-model overlay</span>
+      </div>
+    </div>
+
+    <h3>Carrier overlays confirmed to inherit each base (11 rows)</h3>
+    <table class="dc">
+      <thead><tr><th>Base manuscript</th><th>Carrier overlay</th><th>Location</th></tr></thead>
+      <tbody>
+        <tr class="override"><td><code>Billing_Installment_Schedule_1_0_0_0</code></td><td><code>Carrier_Billing_Installment_Schedule_1_0_0_0</code></td><td><code>CarrierBilling/Installments/</code></td></tr>
+        <tr class="override"><td><code>Billing_Installment_Schedule_3_0_0_0</code></td><td><code>Carrier_Billing_Installment_Schedule_3_0_0_0</code></td><td><code>CarrierBilling/Installments/</code></td></tr>
+        <tr class="override"><td><code>Billing_Projected_Installment_Schedule_1_0_0_0</code></td><td><code>Carrier_Billing_Projected_Installment_Schedule_1_0_0_0</code></td><td><code>CarrierBilling/Installments/</code></td></tr>
+        <tr class="override"><td><code>Billing_InvoiceData_1_0_0_0</code></td><td><code>Carrier_Billing_InvoiceData_1_0_0_0</code></td><td><code>CarrierBilling/Invoice/</code></td></tr>
+        <tr class="override"><td><code>Billing_InvoiceForm_1_0_0_0</code></td><td><code>Carrier_Billing_InvoiceForm_1_0_0_0</code> — overrides <code>Invoice</code>, <code>LexisNexisInvoiceCopy</code>, <code>PFInsuredInvoice</code> documentSets with <code>override="1"</code> <span class="b-gold">non-empty overlay</span></td><td><code>CarrierBilling/Invoice/</code></td></tr>
+        <tr class="override"><td><code>Billing_EmailInvoiceData_1_0_0_0</code></td><td><code>Carrier_Billing_EmailInvoiceData_1_0_0_0</code>, <code>Carrier_Billing_ClaimsAccount_EmailInvoiceData_1_0_0_0</code></td><td><code>CarrierBilling/Invoice/</code></td></tr>
+        <tr class="override"><td><code>Billing_Debit_Change_Notice_1_0_0_0</code></td><td><code>Carrier_Billing_Debit_Change_Notice_1_0_0_0</code></td><td><code>CarrierBilling/Invoice/</code></td></tr>
+        <tr class="override"><td><code>Billing_ClaimsAccountInvoiceData_1_0_0_0</code></td><td><code>Carrier_Billing_ClaimsAccountInvoiceData_1_0_0_0</code></td><td><code>CarrierBilling/Invoice/</code></td></tr>
+        <tr class="override"><td><code>Billing_ClaimsAccountInvoiceForm_1_0_0_0</code></td><td><code>Carrier_Billing_ClaimsAccounttInvoiceForm_1_0_0_0</code> <span class="b-gold">filename typo — double <b>t</b> retained in repo</span></td><td><code>CarrierBilling/Invoice/</code></td></tr>
+        <tr class="override"><td><code>Billing_Events_FollowUp_PCN_Rules_1_0_0_0</code></td><td><code>Carrier_Billing_Events_FollowUp_PCN_Rules_1_0_0_0</code></td><td><code>CarrierBilling/FollowUpEvents/</code></td></tr>
+        <tr class="override"><td><code>Carrier_Billing_Events_FollowUp_PCN_Rules_1_0_0_0</code></td><td><code>Carrier_Billing_Events_NoticeOfLapse_Rules_1_0_0_0</code>, <code>Carrier_Billing_Events_Cancellation_DueToEquity_1_0_0_0</code> <span class="b-gold">both inherit from the carrier PCN rules, not base</span></td><td><code>CarrierBilling/FollowUpEvents/</code></td></tr>
+      </tbody>
+    </table>
+    <div class="info"><b>Evidence:</b> <code>Carrier_Billing_Events_NoticeOfLapse_Rules_1_0_0_0.xml</code> — <code>inherited="Carrier_Billing_Events_FollowUp_PCN_Rules_1_0_0_0"</code>.</div>
+  </div>
+</details>
+
+<!-- ================ S4 ================ -->
+<details class="card" id="s4">
+  <summary><span class="num">§3</span> End-to-End Process Flow <span class="tag-gold">Diagram D2</span></summary>
+  <div class="body">
+    <div class="diagram">
+      <div class="cap">Diagram D2 — Policy Transaction → Installment → Invoice → Follow-Ups (static)</div>
+      <div class="flow">
+        <div class="step"><div class="node root">Policy Transaction<br/><span style="font-weight:400;font-size:11px">NBUS/ENDT/RNEW/REIN/RSTR/RESC/FAUD/RAUD/VAUD/IAUD/PIF/…</span></div></div>
+        <div class="arr"></div>
+        <div class="step"><div class="node">BillingIntegrationBuildMessageRequest<br/><span style="font-weight:400;font-size:11px">payload = BillItems[]</span></div></div>
+        <div class="arr"></div>
+        <div class="step"><div class="node">Billing_Frequency_Calculator_1_0_0_0<br/><span style="font-weight:400;font-size:11px">builds InstallmentDateSets (capped by MaxNumberInstallments)</span></div></div>
+        <div class="arr"></div>
+        <div class="step"><div class="node">Billing_InstallmentAmounts_Calculator_1_0_0_0<br/><span style="font-weight:400;font-size:11px">Downpayment · even split · remainder on last</span></div></div>
+        <div class="arr"></div>
+        <div class="step"><div class="node">BillSchedule.buildRq / BillingSchedule.installmentScheduleRq<br/><span style="font-weight:400;font-size:11px">persisted: DC_BIL_BillItemSchedule</span></div></div>
+        <div class="arr"></div>
+        <div class="step"><div class="node">Installment schedule UIs<br/><span style="font-weight:400;font-size:11px">Billing_Installment_Schedule_{1,3}_0_0_0 · Projected</span></div></div>
+        <div class="arr"></div>
+        <div class="step"><div class="node small" style="background:#eef2f7;border-color:var(--muted);color:var(--muted)">— Billing Cycle / Nightly Batch reaches InstallmentDate —</div></div>
+        <div class="arr"></div>
+        <div class="step"><div class="node override">Billing_InvoiceData_1_0_0_0 · _GenerateInvoice.GenerateInvoice<br/><span style="font-weight:400;font-size:11px">7-step sequence (see Diagram D4)</span></div></div>
+        <div class="arr"></div>
+        <div class="branch">
+          <div class="col">
+            <div class="node">Event_PostInvoiceEvent</div>
+            <div class="side-note">ScheduleLateCharge (LTCH), ScheduleReminderNotice (RMDR), SchedulePendingCancel (PCN), DeleteExpiredInvoiceActivities</div>
+          </div>
+          <div class="col">
+            <div class="node">Event_SendEmailEvent</div>
+            <div class="side-note">Carrier_Billing_EmailInvoiceData_1_0_0_0 · gated by BaseRules AND <span class="b-gold">CarrierRules_SendEmailEvent.Rules = False</span> (§11.B)</div>
+          </div>
+          <div class="col">
+            <div class="node">Event_SuppressedInvoiceEvent</div>
+            <div class="side-note">Fires when suppressed; still schedules follow-ups</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout"><b>Structural fact confirmed in code:</b> Duck Creek Billing separates <b>Installment Scheduling</b> (money-due dates) from <b>Invoice Generation</b> (document production). An installment coming due does <b>not</b> automatically imply a printed/emailed invoice — the <code>GenerateInvoiceReturnCode</code> table has three keys (<code>Success</code>, <code>BelowThreshold</code>, <code>SuppressFirst</code>) and only the first produces a printed document.</div>
+  </div>
+</details>
+
+<!-- ================ S5 ================ -->
+<details class="card" id="s5">
+  <summary><span class="num">§4</span> Installment Generation</summary>
+  <div class="body">
+
+    <h3>4.A Configuration Fields Used</h3>
+    <p>All rows verified in <code>Billing_Frequency_Calculator_1_0_0_0.xml</code>.</p>
+    <table class="dc">
+      <thead><tr><th>Field</th><th>XPath (<code>path="…"</code>)</th><th>Session parent</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>Scheduling_PolicyPlan.MaxNumberInstallments</code></td><td><code>@MaxNbrInst</code></td><td>PolicyTermConfig/Scheduling</td><td>Hard cap on # of installment dates per pay plan.</td></tr>
+        <tr><td><code>Scheduling_PolicyPlan.LastAvailDueDtDisp</code></td><td><code>@LastAvailDueDtDisp</code></td><td>PolicyTermConfig/Scheduling</td><td>Days-before-expiration ceiling; drives <code>_BillingWorkingDoc.EndDate</code> via <code>dateAdd subtract="1"</code>.</td></tr>
+        <tr><td><code>Scheduling_PolicyPlan.NewBusinessEarlyOffset</code></td><td><code>@NBEarlyInvOffset</code></td><td>PolicyTermConfig/Scheduling</td><td>Extra lead days on NBUS (or ENDT on pending NBUS term).</td></tr>
+        <tr><td><code>Scheduling_PolicyPlan.RenewalEarlyInvoiceOffset</code></td><td><code>@RNEarlyInvOffset</code></td><td>PolicyTermConfig/Scheduling</td><td>Extra lead days on RNEW (or ENDT on renewed term).</td></tr>
+        <tr><td><code>Scheduling_AccountPlan.BillProductionOffsetDays</code></td><td><code>@BillPrdOffset</code></td><td>AccountConfig/Scheduling</td><td>Paper invoice production lead time.</td></tr>
+        <tr><td><code>Scheduling_AccountPlan.ElectronicInvoiceOffsetDays</code></td><td><code>@EIOffsetDays</code></td><td>AccountConfig/Scheduling</td><td>Electronic invoice lead time (when overlay active).</td></tr>
+        <tr><td><code>Scheduling_AccountPlan.EFTDrawOffsetDays</code></td><td><code>@EFTDrawOffset</code></td><td>AccountConfig/Scheduling</td><td>EFT draw lead time.</td></tr>
+        <tr><td><code>Scheduling_AccountPlan.BlackOutDatesCalendar</code></td><td><code>@BlackOutDatesCalendar</code></td><td>AccountConfig/Scheduling</td><td>Calendar of blackout dates for date-shift avoidance.</td></tr>
+        <tr><td><code>BuildInputParameters.TargetDueDay</code></td><td><i>(computed)</i></td><td>← <code>Account.TargetDueDays</code></td><td>Target day-of-month for due date; clamped to <code>DaysInMonth</code>.</td></tr>
+        <tr><td><code>Constants.AgencyAccountType</code> = <code>AGT</code></td><td><i>(constant)</i></td><td>—</td><td>Agency accounts skip lead-time / blackout adjustments.</td></tr>
+        <tr class="override"><td><code>Constants.CollectionsAgnecyAccountType</code> = <code>COL2</code> <span class="b-gold">spelling <i>Agnecy</i> retained</span></td><td><i>(constant)</i></td><td>—</td><td>Collections-agency accounts skip lead-time / blackout adjustments.</td></tr>
+      </tbody>
+    </table>
+    <pre class="xml"><span class="k">&lt;private</span> id=<span class="s">"Constants.AgencyAccountType"</span> caption=<span class="s">""</span> type=<span class="s">"string"</span><span class="k">&gt;</span>
+  <span class="k">&lt;value</span> value=<span class="s">"AGT"</span> <span class="k">/&gt;</span>
+<span class="k">&lt;/private&gt;</span>
+<span class="k">&lt;private</span> id=<span class="s">"Constants.CollectionsAgnecyAccountType"</span> caption=<span class="s">""</span> type=<span class="s">"string"</span><span class="k">&gt;</span>
+  <span class="k">&lt;value</span> value=<span class="s">"COL2"</span> <span class="k">/&gt;</span>
+<span class="k">&lt;/private&gt;</span></pre>
+
+    <h3>4.B Scheduling Algorithm (Frequency Calculator)</h3>
+    <ol>
+      <li><b>Start-date resolution</b> (<code>IntialDateSet.StartDate</code> <span class="b-gold">spelling <i>Intial</i> retained</span>) — earlier of <code>PolicyTerm.PolicyTermEffectiveDate</code> (or <code>BillItem.ItemEffectiveDate</code> for mid-term items) and the processing date.</li>
+      <li><b>Target-due-day clamping</b> — if <code>DaysInMonth &lt; TargetDueDay</code>, use <code>DaysInMonth</code>; else use <code>TargetDueDay</code>.</li>
+      <li><b>Days-prior-to-due (invoice lead time)</b> — <code>BuildInputParameters.DaysPriorToDue</code>: EFT → <code>EFTDrawOffsetDays</code>; otherwise → <code>PaperAndElectronicInvoice</code>, which resolves to <code>ElectronicInvoiceOffsetDays</code> when <code>AccountConfig_Invoice.ElectronicInvoice</code> is on, or <code>BillProductionOffsetDays</code> otherwise.</li>
+      <li><b>Agency / Collections exemption</b> — when <code>Account.AccountTypeCode</code> equals <code>AGT</code> or <code>COL2</code>, <code>DaysPriorToDue</code> is forced to <code>0</code>: <b>no lead-time offset and no blackout-date shift</b>.</li>
+      <li><b>Installment date</b> = DueDate − <code>DaysPriorToDue</code>.</li>
+      <li><b>Loop control</b> (<code>Build.BuildData</code>) — <code>Request.loopRq</code> with <code>iterations = MaxNumberInstallments (+1 buffer)</code>; each iteration checks <code>InstallmentCountPlusOne ≤ MaxNumberInstallments</code> AND <code>NextDateSet.DueDate ≤ EndDate</code>.</li>
+      <li><b>Two parallel builders</b> in the same manuscript: Policy-Term-level (<code>Build.*</code>, <code>IntialDateSet.*</code>) for full-term/renewal, Bill-Item-level (<code>BillItemBuild.*</code>) for endorsement/misc/reinstatement mid-term items.</li>
+    </ol>
+    <pre class="xml"><span class="k">&lt;if&gt;</span>
+  <span class="k">&lt;condition&gt;</span>
+    <span class="k">&lt;comparison</span> compare=<span class="s">"lt"</span><span class="k">&gt;</span>
+      <span class="k">&lt;operand</span> idref=<span class="s">"IntialDateSet.DaysInMonth"</span> type=<span class="s">"int"</span> <span class="k">/&gt;</span>
+      <span class="k">&lt;operand</span> idref=<span class="s">"BuildInputParameters.TargetDueDay"</span> type=<span class="s">"int"</span> <span class="k">/&gt;</span>
+    <span class="k">&lt;/comparison&gt;</span>
+  <span class="k">&lt;/condition&gt;</span>
+  <span class="k">&lt;then</span> idref=<span class="s">"IntialDateSet.DaysInMonth"</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;else</span> idref=<span class="s">"BuildInputParameters.TargetDueDay"</span> <span class="k">/&gt;</span>
+<span class="k">&lt;/if&gt;</span></pre>
+
+    <h3>4.C Recalculation Logic</h3>
+    <ul>
+      <li><b>Triggers</b> — ENDT, REIN, and Misc Credit/Debit (<code>BillItem.MiscTypeCode ≠ ""</code>) all set <code>Build.EvaluateExecuteEndorsementFirstInstallment</code>, which sets <code>Build.EndorsementSetMaxDate = DateTime.MaxValue</code> and re-triggers <code>Build.ExecutePolicyTermResultsBuild</code>.</li>
+      <li><b>Stale-installment cleanup</b> — <code>BuildGetNextInstallmentDateSet.RemoveDateSets</code> issues <code>Session.removeElementRq</code> purging <code>Installments</code> nodes where <code>InstallmentDate ≤ NextInstallmentDate AND InstallmentDate &gt; BillItem.ItemExpirationDate</code>.</li>
+      <li><b>Missed / late-entered handling</b> — <code>_BillingWorkingDoc.IsMissedInstallment</code> is <code>True</code> when the bill item's effective date is after its first unfiltered due date AND the transaction date is after the last scheduled installment date.</li>
+      <li><b>Late-entered strategy field</b> — <code>AccountConfig_Scheduling.LateEnterStgy</code> / <code>PolicyTermConfig_Scheduling.LateEnterStgy</code> referenced, but branching logic per strategy code is <span class="b-gold">Not Found in Codebase</span> (search: <code>Billing/ManuScripts/Billing/Billing/Scheduling/*.xml</code>).</li>
+      <li><b>Bill-Item-level rebuild</b> — <code>BillItemBuild.EvaluateExecuteEndorsementFirstInstallment</code> mirrors the pattern via <code>BillItemBuild.EndorsementSetMaxDate</code>.</li>
+    </ul>
+
+    <h3>4.D Short-Term Policy Logic</h3>
+    <div class="callout"><b>Confirmed absent</b> from the Frequency / InstallmentAmounts manuscripts. No <code>ShortTerm</code> / <code>STP</code> field, code path, or table is present.</div>
+    <ul>
+      <li>The <code>ISTP</code> charge type (Installment Setup Fee, fixed <b>$10</b>) is <b>not</b> a short-term-policy fee — it is the multi-installment-plan surcharge, confirmed in <code>Carrier_Billing_Events_PolicyTerm_Post_Actions_1_0_0_0.xml</code> (<code>&lt;nameValue value="10" name="Amount"/&gt;</code> + <code>&lt;nameValue value="ISTP" name="ChargeTypeCode"/&gt;</code>), gated by <code>CarrierRules_PrevBilledFeeChargeEvent_WorkingFields.CheckConditionOtherThanAnnual = False</code> — only non-Annual plans incur it.</li>
+      <li>Short-duration policies are handled emergently by the generic date-window algorithm (<code>EndDate = PolicyTermExpirationDate − LastAvailDueDtDisp</code>) combined with <code>MaxNumberInstallments</code>. <b>There is no dedicated short-term rule set.</b></li>
+    </ul>
+
+    <h3>4.E Installment Amount Split (<code>Billing_InstallmentAmounts_Calculator_1_0_0_0.xml</code>)</h3>
+    <table class="dc">
+      <thead><tr><th>Field</th><th>Formula (verbatim from XML)</th></tr></thead>
+      <tbody>
+        <tr><td><code>SplitInstallmentAmount.TotalInstallmentSplitAmount</code></td><td><code>BillItem.ItemAmount − DownpayInstallmentAmount</code> (rounded to <code>100</code> cents).</td></tr>
+        <tr><td><code>SplitInstallmentAmount.InstallmentSplitAmount</code></td><td><code>TotalInstallmentSplitAmount / TotalDateSetsCount</code> (<code>&lt;argument op="divide" round="100" roundType="round"&gt;</code>).</td></tr>
+        <tr><td><code>SplitInstallmentAmount.RemainingInstallmentSplitAmount</code></td><td><code>TotalInstallmentSplitAmount − (TotalDateSetsCount − 1) × InstallmentSplitAmount</code> — remainder placed on the <b>last</b> installment via <code>GetInstallmentSplitAmount</code>.</td></tr>
+        <tr><td><code>SplitInstallmentAmount.CommissionSplitAmount</code> / <code>.RemainingCommissionSplitAmount</code></td><td>Identical remainder-correction pattern duplicated for commission amounts.</td></tr>
+        <tr><td><code>Downpayment.DownpayPercentageXPath</code></td><td>XPath keyed by <code>TransactionType + ReceivableType + ReceivableSubType</code>, with <code>*</code> wildcard fallback under <code>PolicyTermConfig/DownPayments/DP</code>.</td></tr>
+        <tr><td><code>SplitInstallmentAmount.IsNumOfSplitsPositive</code></td><td>If <code>NumberOfDateSets ≤ 0</code> → invokes <code>RaiseError_WorkFields.RaiseError_NoInstallments</code> (see §9).</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Carrier override switch <span class="b-gold">both default False</span></h4>
+    <pre class="xml"><span class="k">&lt;private</span> id=<span class="s">"CarrierRules_BuildInstallmentAmounts.OverrideBaseRules"</span> caption=<span class="s">""</span> type=<span class="s">"boolean"</span><span class="k">&gt;</span>
+  <span class="k">&lt;value</span> idref=<span class="s">"False"</span> <span class="k">/&gt;</span>
+<span class="k">&lt;/private&gt;</span>
+<span class="k">&lt;private</span> id=<span class="s">"CarrierRules_BuildInstallmentAmounts.AddAdditionalRules"</span> caption=<span class="s">""</span> type=<span class="s">"boolean"</span><span class="k">&gt;</span>
+  <span class="k">&lt;value</span> idref=<span class="s">"False"</span> <span class="k">/&gt;</span>
+<span class="k">&lt;/private&gt;</span></pre>
+    <div class="info"><b>Decisive:</b> no carrier-specific installment-amount override is active — base DCT logic runs unmodified for the split math.</div>
+  </div>
+</details>
+
+<!-- ================ S6 ================ -->
+<details class="card" id="s6">
+  <summary><span class="num">§5</span> Invoice Generation <span class="tag-gold">Diagram D4</span></summary>
+  <div class="body">
+
+    <h3>5.A Invoice Creation Sequence</h3>
+    <p>Root manuscript: <code>Billing/ManuScripts/Billing/Billing/Invoice/Billing_InvoiceData_1_0_0_0.xml</code> — <code>inherited=""</code>. Entry object: <code>_GenerateInvoice/GenerateInvoice</code> (session write path <code>_GenerateInvoice^GenerateInvoice</code>).</p>
+
+    <div class="diagram">
+      <div class="cap">Diagram D4 — 7-step sequence inside <code>GenerateInvoicePrivate.Generate</code></div>
+      <div class="flow">
+        <div class="step"><div class="node">1. ThresholdPreCheck<br/><span style="font-weight:400;font-size:11px">AmountToInvoice vs InvoiceThresholdAmount → SetBelowThreshold on fail</span></div></div>
+        <div class="arr"></div>
+        <div class="step"><div class="node">2. ScheduleOverridePlanCheck<br/><span style="font-weight:400;font-size:11px">has ScheduleOverridePlanCode? → IsInvoicedLate branch</span></div></div>
+        <div class="arr"></div>
+        <div class="step"><div class="node">3. ContinueInvoiceGeneration → SuppressFirstInvoiceCheck<br/><span style="font-weight:400;font-size:11px">SuppressFirst AND FirstInvoice → SetSuppressed</span></div></div>
+        <div class="arr"></div>
+        <div class="step"><div class="node">4. GetInvoiceDataAsXML<br/><span style="font-weight:400;font-size:11px">BillInvoice.getInvoiceDataAsXMLRq → session</span></div></div>
+        <div class="arr"></div>
+        <div class="step"><div class="node">5. Service charge assessment<br/><span style="font-weight:400;font-size:11px">CanAddServiceCharge → GetServiceChargeId → AddServiceCharge → calculateServiceChargeRq</span></div></div>
+        <div class="arr"></div>
+        <div class="step"><div class="node">6. ThresholdPostCheck<br/><span style="font-weight:400;font-size:11px">re-verify after service charge (service charge can pull above threshold)</span></div></div>
+        <div class="arr"></div>
+        <div class="step"><div class="node terminal">7. PrintInvoiceRq<br/><span style="font-weight:400;font-size:11px">BillInvoice.printAndAttachInvoiceRq — accountId, invoiceDate, dueDate, outOfSchedule</span></div></div>
+      </div>
+    </div>
+
+    <h3>5.B <code>GenerateInvoiceReturnCode</code> Enumeration (verbatim)</h3>
+    <pre class="xml"><span class="k">&lt;table</span> id=<span class="s">"GenerateInvoiceReturnCode"</span> tableType=<span class="s">"local"</span><span class="k">&gt;</span>
+  <span class="k">&lt;fields&gt;</span>
+    <span class="k">&lt;keyDef</span> name=<span class="s">"Status"</span> <span class="k">/&gt;</span>
+    <span class="k">&lt;fieldDef</span> name=<span class="s">"ReturnCode"</span> ordinal=<span class="s">"0"</span> default=<span class="s">""</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;/fields&gt;</span>
+  <span class="k">&lt;rowKeys&gt;</span>
+    <span class="k">&lt;key</span> value=<span class="s">"Success"</span> default=<span class="s">"1"</span> <span class="k">/&gt;</span>
+    <span class="k">&lt;key</span> value=<span class="s">"BelowThreshold"</span> <span class="k">/&gt;</span>
+    <span class="k">&lt;key</span> value=<span class="s">"SuppressFirst"</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;/rowKeys&gt;</span>
+  …
+<span class="k">&lt;/table&gt;</span></pre>
+    <div class="callout"><b>Only three keys are defined.</b> The values written into <code>ReturnCode</code> are <b>string keys</b> (<code>Success</code>, <code>BelowThreshold</code>, <code>SuppressFirst</code>), <b>not</b> integers — the "0/1/2" numbering commonly cited is not present in this table.</div>
+
+    <h3>5.C Invoice Generation Timing</h3>
+    <ul>
+      <li>Governed by the installment schedule (§4) plus:
+        <ul>
+          <li><code>Scheduling_AccountPlan.BillProductionOffsetDays</code> (paper) — <code>path="@BillPrdOffset"</code>.</li>
+          <li><code>Scheduling_AccountPlan.ElectronicInvoiceOffsetDays</code> (electronic) — <code>path="@EIOffsetDays"</code>.</li>
+          <li><code>Scheduling_AccountPlan.EFTDrawOffsetDays</code> (EFT) — <code>path="@EFTDrawOffset"</code>.</li>
+        </ul>
+      </li>
+      <li><b>Out-of-schedule generation</b> — <code>GenerateInvoiceInput.OutOfSchedule</code> (<code>path="OutOfSchedule"</code>, boolean) is threaded through to <code>BillInvoice.printAndAttachInvoiceRq</code> as <code>outOfSchedule</code>. The triggering UI/batch caller is <span class="b-gold">Not Found in Codebase</span> — most likely a Billing Console admin action.</li>
+      <li><b>Invoice-Recovery timing overrides</b> — see §7.</li>
+    </ul>
+
+    <h3>5.D Invoice Delivery Channels</h3>
+    <p>Verified via <code>AccountConfig_Invoice.InvMthd</code> (<code>path="@InvMthd"</code>) branches in <code>Billing_InvoiceData_1_0_0_0.xml</code>:</p>
+    <table class="dc">
+      <thead><tr><th>Code</th><th>Meaning</th><th>Service-charge fields</th><th>Threshold field</th></tr></thead>
+      <tbody>
+        <tr><td><code>PA</code></td><td>Paper Invoice</td><td><code>PASvcChgAmt</code> / <code>PASvcChgAct</code> / <code>PASvcChgPct</code></td><td><code>PAInvThreshAmt</code></td></tr>
+        <tr><td><code>EFT</code></td><td>Electronic Funds Transfer</td><td><code>EFTSvcChgAmt</code> / <code>EFTSvcChgAct</code> / <code>EFTSvcChgPct</code></td><td><code>EFTInvThreshAmt</code> (retries: <code>EFTRepCt</code>, <code>EFTRepDays</code>)</td></tr>
+        <tr><td><code>EFTC</code></td><td>EFT via Card</td><td>shares EFT config</td><td><code>EFTInvThreshAmt</code></td></tr>
+        <tr class="override"><td><b>Electronic-Invoice overlay</b> <span class="b-gold">overlay, not a 4th InvMthd</span></td><td><code>AccountConfig_Invoice.ElectronicInvoice = 1</code> on a <code>PA</code> account</td><td><code>EISvcChgAmt</code> / <code>EISvcChgAct</code> / <code>EISvcChgPct</code> + <code>ElectronicInvoiceOffsetDays</code></td><td><code>AccountConfig_Invoice.ELInvThreshAmt</code> (<code>path="@EInvThreshAmt"</code>)</td></tr>
+      </tbody>
+    </table>
+    <pre class="xml"><span class="k">&lt;comparison</span> compare=<span class="s">"and"</span><span class="k">&gt;</span>
+  <span class="k">&lt;operand&gt;&lt;comparison</span> compare=<span class="s">"eq"</span><span class="k">&gt;</span>
+      <span class="k">&lt;operand</span> idref=<span class="s">"AccountConfig_Invoice.InvMthd"</span> type=<span class="s">"string"</span> <span class="k">/&gt;</span>
+      <span class="k">&lt;operand</span> type=<span class="s">"string"</span> value=<span class="s">"PA"</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;/comparison&gt;&lt;/operand&gt;</span>
+  <span class="k">&lt;operand&gt;&lt;comparison</span> compare=<span class="s">"eq"</span><span class="k">&gt;</span>
+      <span class="k">&lt;operand</span> idref=<span class="s">"AccountConfig_Invoice.ElectronicInvoice"</span> type=<span class="s">"string"</span> <span class="k">/&gt;</span>
+      <span class="k">&lt;operand</span> type=<span class="s">"int"</span> value=<span class="s">"1"</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;/comparison&gt;&lt;/operand&gt;</span>
+<span class="k">&lt;/comparison&gt;</span></pre>
+
+    <h4>Delivery mechanics</h4>
+    <ul>
+      <li><code>BillInvoice.printAndAttachInvoiceRq</code> produces/attaches the invoice document regardless of channel.</li>
+      <li><code>Event_SendEmailEvent</code> (in <code>_BillingInvoice</code>) dispatches <code>Carrier_Billing_EmailInvoiceData_1_0_0_0</code> — resolved via <code>BillingObj.getLatestManuScriptIdRq</code> — see §11.B for the hard-coded carrier gate.</li>
+      <li><b>Bounce-back handling</b> — <code>Carrier_Billing_Events_Electronic_Invoice_Bounce_Back_Task_1_0_0_0.xml</code> exists — confirms an undeliverable-electronic-invoice workflow.</li>
+      <li><b>Service-charge exclusions</b> — three lookup objects in <code>AccountConfig_Invoice</code>: <code>PaperInvoiceServiceChargeExclusions</code> (<code>PASCX</code>), <code>EFTServiceChargeExclusions</code> (<code>EFTSCX</code>), <code>ElectronicInvoiceServiceChargeExclusions</code> (<code>EISCX</code>) — keyed by <code>InvoiceLineType / ReceivableType / ReceivableSubType / TransactionType</code>.</li>
+      <li><b>Debit Change Notice</b> — <code>GenerateInvoicePrivate.DebitChangeNoticeRequired</code> fires when <code>InvMthd = EFT</code> AND <code>DebitChangeAmount ≥ AccountConfig_Invoice.ChgNotThresh</code>.</li>
+    </ul>
+    <pre class="xml"><span class="k">&lt;comparison</span> compare=<span class="s">"ge"</span><span class="k">&gt;</span>
+  <span class="k">&lt;operand</span> idref=<span class="s">"InvoicePrivate.DebitChangeAmount"</span> type=<span class="s">"float"</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;operand</span> idref=<span class="s">"AccountConfig_Invoice.ChgNotThresh"</span> type=<span class="s">"float"</span> <span class="k">/&gt;</span>
+<span class="k">&lt;/comparison&gt;</span></pre>
+  </div>
+</details>
+
+<!-- ================ S7 ================ -->
+<details class="card" id="s7">
+  <summary><span class="num">§6</span> Transaction Impact on Billing</summary>
+  <div class="body">
+    <p>Transaction codes referenced in <code>Billing_Frequency_Calculator_1_0_0_0.xml</code> and <code>Billing_Projected_Installment_Schedule_1_0_0_0.xml</code> (and sibling ISTP / UpdatePayPlan matrices in <code>Carrier_Billing_Events_PolicyTerm_Post_Actions_1_0_0_0.xml</code>):</p>
+    <table class="dc">
+      <thead><tr><th>Code</th><th>Billing behavior</th><th>Verified evidence</th></tr></thead>
+      <tbody>
+        <tr><td><code>NBUS</code></td><td>Full schedule build from <code>PolicyTermEffectiveDate</code>; <code>NewBusinessEarlyOffset</code> applies.</td><td><code>&lt;then idref="Scheduling_PolicyPlan.NewBusinessEarlyOffset"/&gt;</code> in Frequency Calculator.</td></tr>
+        <tr><td><code>ENDT</code></td><td>Recalculation via <code>Build.EvaluateExecuteEndorsementFirstInstallment</code>; NB/RN early offset if ENDT rides pending term (<code>_BillingWorkingDoc.IsEndorsementOnRenewal</code>).</td><td><code>&lt;operand idref="_BillingWorkingDoc.IsEndorsementOnRenewal"/&gt;</code>.</td></tr>
+        <tr><td><code>FCAN</code> / <code>PCAN</code></td><td>Cancellation write-off (<code>WACA</code> reason); small-balance auto-write-off. <b>No separate installment rebuild</b> — cancellation zeroes/waives balance rather than re-scheduling.</td><td>Posting-Rules manuscript §4/§5 (prior analysis).</td></tr>
+        <tr class="override"><td><code>REIN</code></td><td>Recalculation path identical to ENDT / Misc-Credit-Debit; <b>$50</b> reinstatement fee when <code>NonPayCancelReinstateIndicator=True</code> (<code>ReinChgAmt</code> write path <code>_BillingInputDoc^PolicyTerm/PolicyTermConfig/Scheduling/@ReinChgAmt</code>).</td><td><code>&lt;nameValue value="_BillingInputDoc^PolicyTerm/PolicyTermConfig/Scheduling/@ReinChgAmt" name="path" .../&gt;</code>.</td></tr>
+        <tr><td><code>REIS</code></td><td>Recognized in <code>transaction.BillingType</code> select; no distinct schedule-rebuild branch beyond generic bill-item processing.</td><td>(search: <code>Billing_Frequency_Calculator_1_0_0_0.xml</code>).</td></tr>
+        <tr><td><code>RWRI</code></td><td>Recognized in payment-allocation and ISTP-condition tables; no separate rebuild branch.</td><td>Posting-Rules manuscript.</td></tr>
+        <tr><td><code>RSTR</code></td><td>Triggers <code>Build.EndorsementSetMaxDate</code> override identically to ENDT/REIN; also drives <code>PolicyTerms_RSTR.ExpireActivities</code>.</td><td>Posting-Rules manuscript.</td></tr>
+        <tr><td><code>RNEW</code></td><td>Full rebuild from <code>PolicyTermEffectiveDate</code> of renewal term; <code>RenewalEarlyInvoiceOffset</code> applies; plan auto-forced to Annual sibling except <code>SP_ACT_P5</code> / <code>SP_ACT_P9</code>.</td><td><code>&lt;then idref="Scheduling_PolicyPlan.RenewalEarlyInvoiceOffset"/&gt;</code>.</td></tr>
+        <tr><td><code>RESC</code></td><td>Recognized in select; used in PCN follow-up (<code>SendRescindRq</code>, <code>ARPC</code> activity type) when equity condition is satisfied.</td><td>Follow-up manuscripts.</td></tr>
+        <tr><td><code>FAUD</code> / <code>RAUD</code> / <code>VAUD</code> / <code>IAUD</code></td><td>Recognized in select; feed as premium adjustments to existing schedule — no separate re-scheduling.</td><td>(search: <code>Billing_Frequency_Calculator_1_0_0_0.xml</code>).</td></tr>
+        <tr><td><code>PIF</code></td><td>Paid-in-Full discount — separate manuscript <code>Carrier_Billing_Paid_In_Full_Discount_1_0_0_0.xml</code> (not deep-dived).</td><td><code>CarrierBilling/Base/</code>.</td></tr>
+        <tr><td><code>INFO</code></td><td>No financial/schedule impact — informational only.</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <div class="info"><b>All codes flow through <code>PolicyTermPostEvent</code></b> in <code>Carrier_Billing_Events_PolicyTerm_Post_Actions_1_0_0_0</code> — the single dispatch hook where transaction-specific posting rules (ISTP, PRBF, UpdatePayPlan, write-offs, reinstatement fee) are applied. The Frequency Calculator itself carries no transaction-specific fee logic — only date math.</div>
+  </div>
+</details>
+
+<!-- ================ S8 ================ -->
+<details class="card" id="s8">
+  <summary><span class="num">§7</span> Invoice Recovery (Custom Late-Invoice Behavior) <span class="tag-gold">Custom · Diagram D3</span></summary>
+  <div class="body">
+    <p><code>GenerateInvoicePrivate_InvoiceRecovery</code> (inside <code>Billing_InvoiceData_1_0_0_0.xml</code>) is the largest custom-logic block in invoice generation. It fires when <code>ScheduleOverridePlanCheck = True</code> and the actual run is late.</p>
+
+    <h3>7.A Config Lookup</h3>
+    <p>Configuration comes from a <b>custom-defined table</b> <code>InvoiceRecoveryPlans</code> (also <code>ScheduleOverridePlans</code> for the plan-code lookup), resolved against manuscript <code>Carrier_Billing_Schedule_Override_Plan_1_0_0_0</code>:</p>
+    <pre class="xml"><span class="k">&lt;private</span> id=<span class="s">"…ScheduleOverridePlanManuscriptId"</span><span class="k">&gt;</span>
+  <span class="k">&lt;value</span> value=<span class="s">"Carrier_Billing_Schedule_Override_Plan_1_0_0_0"</span> <span class="k">/&gt;</span>
+<span class="k">&lt;/private&gt;</span>
+<span class="k">&lt;private</span> id=<span class="s">"…InvoiceRecoveryPlansTable"</span><span class="k">&gt;</span>
+  <span class="k">&lt;value</span> value=<span class="s">"InvoiceRecoveryPlans"</span> <span class="k">/&gt;</span>
+<span class="k">&lt;/private&gt;</span>
+<span class="k">&lt;private</span> id=<span class="s">"…ScheduleOverridePlansTable"</span><span class="k">&gt;</span>
+  <span class="k">&lt;value</span> value=<span class="s">"ScheduleOverridePlans"</span> <span class="k">/&gt;</span>
+<span class="k">&lt;/private&gt;</span></pre>
+
+    <p>Fields looked up per <code>(InvoiceRecoveryPlanCode, CollectionMethod)</code>:</p>
+    <table class="dc">
+      <thead><tr><th>Field</th><th>Source</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>PushDueDate</code> (boolean)</td><td><code>InvoiceRecoveryPlans.PushDueDate</code></td><td>Whether recovery pushes the due date forward.</td></tr>
+        <tr><td><code>PushDueDateNextInvoiceOffsetDays</code></td><td>same table</td><td>Days-before-next-invoice cutoff for pushing.</td></tr>
+        <tr><td><code>RecoveryOffsetDays</code></td><td>same table</td><td>Days past due date after which recovery kicks in.</td></tr>
+        <tr><td><code>RedistributionStrategyCode</code></td><td>same table</td><td>Strategy used by <code>BillSchedule.redistributeInstallmentDueToInvoiceRecoveryRq</code>.</td></tr>
+        <tr><td><code>InvoiceRecoveryPlanCode</code></td><td><code>ScheduleOverridePlans</code></td><td>Plan code resolved from <code>AccountConfig_Scheduling.ScheduleOverridePlanCode</code>.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7.B Decision Tree <span class="b-gold">Diagram D3</span></h3>
+    <div class="diagram">
+      <div class="cap">Diagram D3 — Invoice Recovery decision tree (inline SVG, static)</div>
+      <svg class="d3" viewBox="0 0 1100 720" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#1d3d73"/>
+          </marker>
+          <style>
+            .n{fill:#fff;stroke:#1d3d73;stroke-width:1.5}
+            .n text{fill:#0b2545;font:600 12px "Segoe UI",Arial;text-anchor:middle}
+            .d{fill:#fff4c4;stroke:#c9a227;stroke-width:1.8}
+            .d text{fill:#4a3a05;font:700 12px "Segoe UI",Arial;text-anchor:middle}
+            .t{fill:#0f8b8d;stroke:#0f8b8d}
+            .t text{fill:#fff;font:600 12px "Segoe UI",Arial;text-anchor:middle}
+            .e{stroke:#1d3d73;stroke-width:1.6;fill:none}
+            .lbl{fill:#13315c;font:600 11px "Segoe UI",Arial;text-anchor:middle}
+            .lblg{fill:#8a6a05;font:700 11px "Segoe UI",Arial;text-anchor:middle}
+          </style>
+        </defs>
+
+        <!-- Row 1 -->
+        <g class="n"><rect x="440" y="10" width="220" height="42" rx="6"/><text x="550" y="36">GenerateInvoice → ScheduleOverridePlanCheck?</text></g>
+
+        <!-- Row 2 -->
+        <path class="e" d="M550,52 L550,90" marker-end="url(#arr)"/>
+        <text class="lbl" x="470" y="80">False → ContinueInvoiceGeneration</text>
+        <g class="d"><rect x="450" y="90" width="200" height="42" rx="21"/><text x="550" y="116">IsInvoicedLate ?</text></g>
+
+        <!-- Row 3 -->
+        <path class="e" d="M550,132 L550,170" marker-end="url(#arr)"/>
+        <text class="lbl" x="470" y="160">False → ContinueInvoiceGeneration</text>
+        <g class="d"><rect x="450" y="170" width="200" height="42" rx="21"/><text x="550" y="196">CanPushDueDate ? (config)</text></g>
+
+        <!-- Row 4: split -->
+        <path class="e" d="M550,212 L240,260" marker-end="url(#arr)"/>
+        <text class="lblg" x="360" y="245">False</text>
+        <path class="e" d="M550,212 L860,260" marker-end="url(#arr)"/>
+        <text class="lblg" x="740" y="245">True</text>
+
+        <g class="n"><rect x="130" y="260" width="220" height="42" rx="6"/><text x="240" y="286">DoNotPushDueDate → RedistributeInstallment</text></g>
+        <g class="d"><rect x="750" y="260" width="220" height="42" rx="21"/><text x="860" y="286">ExistNextInvoiceDate ?</text></g>
+
+        <!-- Row 5 side note -->
+        <text class="lbl" x="240" y="325">evaluates EFT amount/date change</text>
+        <text class="lbl" x="240" y="340">notification window (§7.C)</text>
+
+        <!-- Right branch further split -->
+        <path class="e" d="M860,302 L710,360" marker-end="url(#arr)"/>
+        <text class="lblg" x="770" y="335">False</text>
+        <path class="e" d="M860,302 L1000,360" marker-end="url(#arr)"/>
+        <text class="lblg" x="960" y="335">True</text>
+
+        <g class="n"><rect x="590" y="360" width="240" height="42" rx="6"/><text x="710" y="386">EvaluateAdvancedNotifications</text></g>
+        <g class="d"><rect x="880" y="360" width="220" height="42" rx="21"/><text x="990" y="386">EvaluatePushDueDateRule</text></g>
+
+        <!-- From EvaluatePushDueDateRule → two branches -->
+        <path class="e" d="M990,402 L710,470" marker-end="url(#arr)"/>
+        <text class="lblg" x="820" y="440">past RecoveryNextInvoiceDate →</text>
+        <path class="e" d="M990,402 L990,470" marker-end="url(#arr)"/>
+        <text class="lblg" x="1030" y="440">else →</text>
+
+        <g class="n"><rect x="590" y="470" width="240" height="52" rx="6"/><text x="710" y="492">Methods.RedistributeInstallment</text><text x="710" y="508" style="font:400 10.5px monospace">BillSchedule.redistributeInstallment...Rq</text></g>
+        <g class="n"><rect x="870" y="470" width="240" height="42" rx="6"/><text x="990" y="496">EvaluateAdvancedNotifications</text></g>
+
+        <!-- Advance Notifications -->
+        <path class="e" d="M990,512 L990,555" marker-end="url(#arr)"/>
+        <g class="d"><rect x="880" y="555" width="220" height="42" rx="21"/><text x="990" y="581">PushDueDate ?</text></g>
+
+        <path class="e" d="M990,597 L820,660" marker-end="url(#arr)"/>
+        <text class="lblg" x="890" y="635">push</text>
+        <path class="e" d="M990,597 L1050,660" marker-end="url(#arr)"/>
+        <text class="lblg" x="1055" y="635">!push</text>
+
+        <g class="t"><rect x="700" y="660" width="240" height="50" rx="6"/><text x="820" y="682">ProcessIndividualDueDateChange</text><text x="820" y="698" style="font:400 10.5px monospace" fill="#fff">BillSchedule.changeIndividualDueDateRq</text></g>
+        <g class="t"><rect x="940" y="660" width="150" height="50" rx="6"/><text x="1015" y="680">GenerateRecovery</text><text x="1015" y="696">InvoiceWithOutPushingDueDate</text></g>
+      </svg>
+    </div>
+
+    <h3>7.C EFT Regulatory-Notice Gates</h3>
+    <p><code>AdvanceNotificationsNewDueDate</code> / <code>AdvanceNotificationsCurrentDueDate</code> check whether the account is inside an EFT amount-change or due-date-change notice window before allowing redistribution.</p>
+    <ul>
+      <li><code>InvoiceRecovery_BankDetails.EFTAmountChangeOffsetDays</code> (int, <code>path="EFTAmountChangeOffsetDays"</code>).</li>
+      <li><code>InvoiceRecovery_BankDetails.EFTDueDateChangeOffsetDays</code> (int, <code>path="EFTDueDateChangeOffsetDays"</code>).</li>
+      <li>Sentinel constant: <code>GenerateInvoicePrivate_InvoiceRecovery.NoInvoiceDate = "1900-01-01"</code>.</li>
+      <li>Change-detection: <code>AmountHasChangedFromLastInvoice</code> when <code>DrawAmountChange &gt; AccountConfig_Invoice.ChgNotThresh</code>; <code>DueDateHasChangedFromLastInvoice</code> compares <code>PreviousInvoiceDay</code> vs <code>CurrentInvoiceDay</code> (with end-of-month special cases via <code>isPreviousDueDateEndOfMonth</code> / <code>isCurrentDueDateEndOfMonth</code>).</li>
+    </ul>
+    <div class="callout"><b>Regulatory-notice-compliance gate on recovery behavior</b> — recovery cannot skip advance notification requirements for EFT/ACH accounts.</div>
+  </div>
+</details>
+
+<!-- ================ S9 ================ -->
+<details class="card" id="s9">
+  <summary><span class="num">§8</span> Billing Schedules <span class="tag-gold">Diagram D5</span></summary>
+  <div class="body">
+
+    <h3>8.A Invoice Plan (Account-level, <code>AccountConfig/Invoice</code>)</h3>
+    <p>Attributes confirmed in <code>Billing_InvoiceData_1_0_0_0.xml</code>:</p>
+    <table class="dc">
+      <thead><tr><th>Field</th><th>Path</th><th>Type</th></tr></thead>
+      <tbody>
+        <tr><td><code>InvMthd</code></td><td><code>@InvMthd</code></td><td>string (<code>PA</code> / <code>EFT</code> / <code>EFTC</code>)</td></tr>
+        <tr><td><code>ElectronicInvoice</code></td><td><code>@ElectronicInvoice</code></td><td>string ("1"=on)</td></tr>
+        <tr><td><code>PASvcChgAmt</code> / <code>PASvcChgPct</code> / <code>PASvcChgAct</code></td><td><code>@…</code></td><td>Paper service charge (flat / percent / action).</td></tr>
+        <tr><td><code>EFTSvcChgAmt</code> / <code>EFTSvcChgPct</code> / <code>EFTSvcChgAct</code></td><td><code>@…</code></td><td>EFT service charge.</td></tr>
+        <tr><td><code>EISvcChgAmt</code> / <code>EISvcChgPct</code> / <code>EISvcChgAct</code></td><td><code>@…</code></td><td>Electronic-invoice service charge.</td></tr>
+        <tr><td><code>SvcChgMinAmt</code> / <code>SvcChgMaxAmt</code></td><td><code>@…</code></td><td>Service-charge collar.</td></tr>
+        <tr><td><code>PAInvThreshAmt</code> / <code>EFTInvThreshAmt</code> / <code>AccountConfig_Invoice.ELInvThreshAmt</code></td><td><code>@PAInvThreshAmt</code> / <code>@EFTInvThreshAmt</code> / <code>@EInvThreshAmt</code></td><td>Per-channel suppression threshold.</td></tr>
+        <tr><td><code>SuppressFirst</code></td><td><code>@SupFirst</code></td><td>boolean — suppress first invoice.</td></tr>
+        <tr><td><code>IncludePCN</code></td><td><code>@IncludePCN</code></td><td>Whether PCN policies' current-due premium is rolled into totals.</td></tr>
+        <tr><td><code>ChgNotThresh</code></td><td><code>@ChgNotThresh</code></td><td>Debit Change Notice threshold.</td></tr>
+        <tr><td><code>EFTFrmReq</code></td><td><code>@EFTFrmReq</code></td><td>EFT auth form required.</td></tr>
+        <tr><td><code>EFTRepCt</code> / <code>EFTRepDays</code></td><td><code>@EFTRepCt</code> / <code>@EFTRepDays</code></td><td>EFT retry count / days.</td></tr>
+        <tr><td><code>PrintJob</code></td><td><code>@PrintJob</code></td><td>Print-job routing code.</td></tr>
+        <tr><td><code>FormMS</code></td><td><code>@FormMS</code></td><td>Invoice-form manuscript ID.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>8.B Installment Plan (Policy-Term-level, <code>PolicyTermConfig/Scheduling</code>)</h3>
+    <table class="dc">
+      <thead><tr><th>Field</th><th>Path</th><th>Verified in</th></tr></thead>
+      <tbody>
+        <tr><td><code>Freq</code></td><td><code>@Freq</code></td><td><code>PolicyTermConfig</code> (per prior Pay-Plan analysis)</td></tr>
+        <tr><td><code>MaxNbrInst</code></td><td><code>@MaxNbrInst</code></td><td><code>Billing_Frequency_Calculator_1_0_0_0</code></td></tr>
+        <tr><td><code>LastAvailDueDtDisp</code></td><td><code>@LastAvailDueDtDisp</code></td><td><code>Billing_Frequency_Calculator_1_0_0_0</code></td></tr>
+        <tr><td><code>NBEarlyInvOffset</code></td><td><code>@NBEarlyInvOffset</code></td><td><code>Billing_Frequency_Calculator_1_0_0_0</code></td></tr>
+        <tr><td><code>RNEarlyInvOffset</code></td><td><code>@RNEarlyInvOffset</code></td><td><code>Billing_Frequency_Calculator_1_0_0_0</code></td></tr>
+        <tr class="override"><td><code>LateEnterStgy</code> / <code>RescRdstStgy</code></td><td>—</td><td>Referenced as config attributes; branching logic <span class="b-gold">Not Found in Codebase</span>.</td></tr>
+        <tr><td><code>ReinChgAmt</code></td><td><code>@ReinChgAmt</code></td><td><code>Carrier_Billing_Events_PolicyTerm_Post_Actions_1_0_0_0</code> (reinstatement fee override).</td></tr>
+        <tr><td><code>InstPlanDesc</code></td><td><code>@InstPlanDesc</code></td><td>UI description (from prior Pay-Plan analysis).</td></tr>
+      </tbody>
+    </table>
+
+    <h3>8.C Due-Date Precedence <span class="b-gold">Diagram D5</span></h3>
+    <div class="diagram">
+      <div class="cap">Diagram D5 — Highest → lowest specificity</div>
+      <div class="layers">
+        <div class="layer override"><div class="rank">1</div><div class="txt"><b>Missed / late-entered override</b> — supersedes normal placement when the bill item posts after its natural first-installment slot.</div></div>
+        <div class="layer override"><div class="rank">2</div><div class="txt"><b>Invoice Recovery push</b> (§7) — pushes due date forward via <code>BillSchedule.changeIndividualDueDateRq</code> or full redistribution.</div></div>
+        <div class="layer"><div class="rank">3</div><div class="txt"><b>Early-invoice offset</b> — NB / RN early offset shortens lead for first installment only.</div></div>
+        <div class="layer"><div class="rank">4</div><div class="txt"><b>Days-prior-to-due offset</b> — channel-specific (EFT / paper / electronic).</div></div>
+        <div class="layer"><div class="rank">5</div><div class="txt"><b>Target-due-day clamping</b> — clamp to <code>DaysInMonth</code> if configured day doesn't exist that month.</div></div>
+        <div class="layer"><div class="rank">6</div><div class="txt"><b>Blackout-date shift</b> — off calendar blackout days (except AGT / COL2 accounts, which skip both offset AND blackout shift).</div></div>
+      </div>
+    </div>
+
+    <h3>8.D Installment Configuration Matrix</h3>
+    <table class="dc">
+      <thead><tr><th>Dimension</th><th>Account-level</th><th>Policy-Term-level</th><th>Scope</th></tr></thead>
+      <tbody>
+        <tr><td>Frequency</td><td>—</td><td><code>Scheduling_PolicyPlan.Freq</code></td><td>Per policy term</td></tr>
+        <tr><td>Max installments</td><td>—</td><td><code>Scheduling_PolicyPlan.MaxNumberInstallments</code></td><td>Per policy term</td></tr>
+        <tr><td>Invoice lead (paper)</td><td><code>Scheduling_AccountPlan.BillProductionOffsetDays</code></td><td>—</td><td>Per account</td></tr>
+        <tr><td>Invoice lead (electronic)</td><td><code>Scheduling_AccountPlan.ElectronicInvoiceOffsetDays</code></td><td>—</td><td>Per account</td></tr>
+        <tr><td>Invoice lead (EFT)</td><td><code>Scheduling_AccountPlan.EFTDrawOffsetDays</code></td><td>—</td><td>Per account</td></tr>
+        <tr><td>Early NB offset</td><td>—</td><td><code>Scheduling_PolicyPlan.NewBusinessEarlyOffset</code></td><td>Per policy term</td></tr>
+        <tr><td>Early RN offset</td><td>—</td><td><code>Scheduling_PolicyPlan.RenewalEarlyInvoiceOffset</code></td><td>Per policy term</td></tr>
+        <tr><td>Schedule-ceiling before expiration</td><td>—</td><td><code>Scheduling_PolicyPlan.LastAvailDueDtDisp</code></td><td>Per policy term</td></tr>
+        <tr><td>Blackout calendar</td><td><code>Scheduling_AccountPlan.BlackOutDatesCalendar</code></td><td>—</td><td>Per account</td></tr>
+        <tr><td>Down-payment %</td><td>—</td><td><code>PolicyTermConfig/DownPayments/DP</code> (Tran/Rec/Sub)</td><td>Per policy term, per receivable</td></tr>
+        <tr class="override"><td>Schedule-override plan</td><td><code>AccountConfig_Scheduling.ScheduleOverridePlanCode</code></td><td>—</td><td>Per account</td></tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<!-- ================ S10 ================ -->
+<details class="card" id="s10">
+  <summary><span class="num">§9</span> Error Handling</summary>
+  <div class="body">
+
+    <h3>9.A Invoice Suppression / Failure Return Codes</h3>
+    <table class="dc">
+      <thead><tr><th>Return-code key (string)</th><th>Trigger</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>Success</code></td><td>Default row (<code>default="1"</code>)</td><td>Invoice generated.</td></tr>
+        <tr><td><code>BelowThreshold</code></td><td><code>SetBelowThreshold</code> invoked from <code>ThresholdPreCheck</code> or <code>ThresholdPostCheck</code> when <code>AmountToInvoice &lt; InvoiceThresholdAmount</code></td><td>Fires pre- OR post-service-charge — service charge can pull an invoice above threshold.</td></tr>
+        <tr><td><code>SuppressFirst</code></td><td><code>SetSuppressed</code> invoked when <code>AccountConfig_Invoice.SuppressFirst = True AND InvoiceInput.FirstInvoice = True</code></td><td>First-ever invoice on account is suppressed.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><b>Suppressed invoices still trigger <code>Event_SuppressedInvoiceEvent</code></b>, which schedules follow-up activities through <code>AddScheduledFollowUps_SuppressedInvoiceEvent</code> — suppression stops the printed document, not the collections lifecycle.</div>
+
+    <h3>9.B Installment-Split Error</h3>
+    <ul>
+      <li><code>RaiseError_WorkFields.RaiseError_NoInstallments</code> is a <code>boolean</code> initialized <code>False</code>. When <code>SplitInstallmentAmount.IsNumOfSplitsPositive</code> fails (<code>NumberOfDateSets ≤ 0</code>), the field is raised.</li>
+      <li>The specific numeric <code>ErrorCode</code> assigned by the base <code>RaiseError_WorkFields</code> is <b>not visible</b> in <code>Billing_InstallmentAmounts_Calculator_1_0_0_0.xml</code> — set in the inherited <code>Carrier_Billing_Base_Data_1_0_0_0</code> manuscript. <span class="b-gold">Not Fully Verified</span> at this layer.</li>
+      <li>Related known error codes (from prior Posting-Rules analysis): <code>21</code> = ReinstateNotImplemented (stub), <code>20</code> = PlanCodeNotFound, <code>7</code> = getNonBlackoutDate, <code>22</code> = ActivityDatePassed.</li>
+    </ul>
+
+    <h3>9.C Async / Batch Retry</h3>
+    <ul>
+      <li><code>Billing/BatchScripts/BatchRetryRequest.xml</code> — scheduled batch that queries <code>CustomServer.listSemaphoresRq</code> for async requests where <code>ResponseStatus = failure</code> AND <code>QueueStatus = 4</code>.</li>
+      <li><code>Carrier_AutomatedProcess_AsyncRetry</code> (<code>Billing/ManuScripts/AutomatedProcess/CarrierAdmin/AsyncRetry/Carrrier_AutomatedAsyncRetry.xml</code> <span class="b-gold">filename typo retained</span>) — inherits <code>DCT_AutomatedProcess_AsyncRetry</code> and is an <b>empty-model overlay</b>: no carrier customization present.</li>
+      <li>The retry harness is generic — not invoice-specific — so any invoice-generation or schedule-build request dispatched asynchronously that failed would be picked up if the batch is scheduled.</li>
+      <li><code>DCT_AutomatedProcess_AsyncRetry</code> exposes <code>AsyncRequest.QueueStatus</code> (<code>path="@queueStatus"</code>, int) and a <code>ChangeRequestQueueStatus</code> block wiring in <code>Setup.NewStatus</code>.</li>
+    </ul>
+
+    <h3>9.D Rebuild vs. Surgical Change</h3>
+    <table class="dc">
+      <thead><tr><th>Mechanism</th><th>Verb</th><th>Scope</th></tr></thead>
+      <tbody>
+        <tr><td>Full re-execution of <code>Build.BuildData</code></td><td><i>(internal — <code>Build.ExecutePolicyTermResultsBuild</code>)</i></td><td>All installments for the policy term.</td></tr>
+        <tr><td>Purge stale installments</td><td><code>Session.removeElementRq</code> with XPath predicate</td><td><code>Installments</code> nodes matching the predicate.</td></tr>
+        <tr><td>Individual due-date change</td><td><code>BillSchedule.changeIndividualDueDateRq</code></td><td>Single <code>InstallmentId + ReceivableTypeCode</code>.</td></tr>
+        <tr><td>Redistribute installment</td><td><code>BillSchedule.redistributeInstallmentDueToInvoiceRecoveryRq</code></td><td>Remaining installments re-spread per <code>RedistributionStrategyCode</code>.</td></tr>
+        <tr><td>Regenerate one invoice</td><td><code>BillInvoice.generateSingleInvoiceRq</code> (inside <code>GenerateInvoicePrivate_InvoiceRecovery.GenerateRecoveryInvoice</code>)</td><td>Single replacement invoice at new date.</td></tr>
+        <tr><td>Preview installments</td><td>UI action → <code>Billing_Projected_Installment_Schedule_1_0_0_0</code></td><td>Non-destructive what-if.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<!-- ================ S11 ================ -->
+<details class="card" id="s11">
+  <summary><span class="num">§10</span> Company / LOB Differences (Safepoint / Cajun / Manatee)</summary>
+  <div class="body">
+
+    <h3>10.A Discriminator Mechanism (verified)</h3>
+    <p>Verified in <code>Billing/ManuScripts/Billing/CarrierBilling/Base/Carrier_Forms_Letters_Manuscript_1_0_0_0.xml</code>. Company is detected by <b>paired</b> comparison of <code>Account.ProcessingOrgUnitCode</code> AND <code>PolicyTerm.PolicyTermProcessingOrgUnitCode</code> (AND'd):</p>
+    <table class="dc">
+      <thead><tr><th>Company</th><th>Account ProcessingOrgUnitCode</th><th>PolicyTerm ProcessingOrgUnitCode</th></tr></thead>
+      <tbody>
+        <tr><td><b>Safepoint (SIC)</b></td><td><code>9999</code></td><td><code>1</code></td></tr>
+        <tr><td><b>Cajun (CIC)</b></td><td><code>8888</code></td><td><code>2</code></td></tr>
+        <tr><td><b>Manatee (MIE)</b></td><td><code>7777</code></td><td><code>3</code></td></tr>
+      </tbody>
+    </table>
+    <pre class="xml"><span class="k">&lt;rowKeys&gt;</span>
+  <span class="k">&lt;key</span> value=<span class="s">"1"</span> caption=<span class="s">""</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;key</span> value=<span class="s">"9999"</span> caption=<span class="s">""</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;key</span> value=<span class="s">"2"</span> caption=<span class="s">""</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;key</span> value=<span class="s">"8888"</span> caption=<span class="s">""</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;key</span> value=<span class="s">"3"</span> caption=<span class="s">""</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;key</span> value=<span class="s">"7777"</span> caption=<span class="s">""</span> <span class="k">/&gt;</span>
+<span class="k">&lt;/rowKeys&gt;</span></pre>
+
+    <p>The <code>Is&lt;Company&gt;</code> booleans are <b>re-declared per feature</b> (same formula, different scopes):</p>
+    <table class="dc">
+      <thead><tr><th>Boolean object.field</th><th>Scope</th></tr></thead>
+      <tbody>
+        <tr><td><code>FormTableDataPrivate.IsSafepoint / IsCajun / IsManatee</code></td><td>Generic form-selection</td></tr>
+        <tr><td><code>NoticeOfLapse_WorkingFields.IsSafepointNOL / IsCajunNOL / IsManateeNOL</code></td><td>NOL forms</td></tr>
+        <tr class="override"><td><code>NoticeOfWithDraw_WorkingFields.IsSafepointNOW / IsCajunNOW / IsManateeNOW</code> <span class="b-gold">IsManateeNOW field defines <code>path="IsSafepointNOW"</code> — copy-paste artifact retained</span></td><td>NOW forms</td></tr>
+        <tr><td><code>AccountActivityPrivate.IsSafepoint / IsCajun / IsManatee</code></td><td>Account Breakdown Letter (<code>Carrier_Account_Breakdown_Letter_1_0_0_0.xml</code>)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>10.B Company-Specific Behavior Confirmed <b>Absent</b></h3>
+    <div class="callout"><b>No company-specific installment schedule, frequency, threshold, service-charge amount, or invoice-generation timing logic</b> exists in <code>Billing_Frequency_Calculator_1_0_0_0</code>, <code>Billing_InstallmentAmounts_Calculator_1_0_0_0</code>, or <code>Billing_InvoiceData_1_0_0_0</code>. Searches on these three files for <code>IsSafepoint|IsCajun|IsManatee|ProcessingOrgUnitCode|9999|8888|7777</code> return <b>zero</b> matches.</div>
+    <p><b>Confirmed differentiator scope:</b> company only affects the <b>document template</b> stamped (via <code>&lt;subdoc condition="…"&gt;</code>) and the <b>activity-log narrative prefix / queue name</b> (<code>Billing.SFPQueueAttachments</code>, <code>CJNQueueAttachments</code>, <code>MNTQueueAttachments</code>).</p>
+
+    <h3>10.C Document Template Selection (per company)</h3>
+    <p>Verbatim <code>&lt;subdoc&gt;</code> entries from <code>Carrier_Forms_Letters_Manuscript_1_0_0_0.xml</code> (Notice-of-Cancellation family):</p>
+    <table class="dc">
+      <thead><tr><th>Notice</th><th>Safepoint</th><th>Cajun</th><th>Manatee</th></tr></thead>
+      <tbody>
+        <tr><td>Notice of Cancellation Cover Page Insured</td><td><code>SIC NTC 04 07 03 16 Notice of Cancellation Cover Page Insured.doc</code></td><td><code>SIC NTC 04 07 03 16 Notice of Cancellation Cover Page Insured_CJN.doc</code></td><td><code>MIE NTC 04 04 10 23 Notice of Cancellation Cover Page Insured_MNT.doc</code></td></tr>
+        <tr><td>Notice of Cancellation Non-Payment</td><td><code>SIC NTC 04 07 03 16 Notice of Cancellation for Non-Payment of Premium.doc</code></td><td><code>..._CJN.doc</code></td><td><code>MIE NTC 04 04 10 23 Notice of Cancellation for Non-Payment of Premium_MNT.doc</code></td></tr>
+        <tr class="override"><td>Notice of Cancellation Mortgagee</td><td><code>SIC NTC 04 07 03 16 Notice of Cancellation Cover Page Mortagage.doc</code> <span class="b-gold">spelling <i>Mortagage</i> retained</span></td><td><code>..._CJN.doc</code></td><td><code>MIE NTC 04 04 10 23 Notice of Cancellation Cover Page Mortagage_MNT.doc</code></td></tr>
+        <tr><td>Notice of Lapse Cover Page</td><td><code>NOL Cover Page.doc</code></td><td><code>NOL Cover Page_CJN.doc</code></td><td><code>NOL Cover Page_MNT.doc</code></td></tr>
+        <tr><td>Notice of Lapse body</td><td><code>SIC NTC 04 04 03 16 NOTICE OF LAPSE.doc</code></td><td><code>..._CJN.doc</code></td><td><code>MIE NTC 04 04 10 23 NOTICE OF LAPSE_MNT.doc</code></td></tr>
+        <tr><td>Notice of Withdrawal (AI)</td><td><code>NoticeOfWithDrawlAI.doc</code></td><td><code>NoticeOfWithDrawlAI_CJN.doc</code></td><td><code>NoticeOfWithDrawlAI_MNT.doc</code></td></tr>
+        <tr><td>Notice of Withdrawal (Insured AIO)</td><td><code>NoticeOfWithDrawlInsuredAIO.doc</code></td><td><code>NoticeOfWithDrawlInsuredAIO_CJN.doc</code></td><td><code>NoticeOfWithDrawlInsuredAIO_MNT.doc</code></td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><b>Naming-convention drift confirmed:</b> Safepoint templates use the <code>SIC NTC 04 07 03 16</code> series; Cajun templates reuse the same <code>SIC NTC…</code> names with a <code>_CJN</code> suffix; Manatee templates use an <b>independent <code>MIE NTC 04 04 10 23</code> numbering series</b> — not merely a suffix swap. Documentation-maintenance risk if the two companies' notices need to evolve together.</div>
+
+    <h3>10.D LOB Differentiation in Billing</h3>
+    <p>Only <code>FormTableData.OutputFileLOB</code> (and its <code>_CJN</code> / <code>_MNT</code> siblings) is company-branched by LOB tag; the underlying billing math is identical across LOBs. <b>No LOB-based billing rule branch was found</b> in the manuscripts examined.</p>
+  </div>
+</details>
+
+<!-- ================ S12 ================ -->
+<details class="card" id="s12">
+  <summary><span class="num">§11</span> Custom Coding &amp; Configuration Gotchas <span class="tag-gold">Custom</span></summary>
+  <div class="body">
+
+    <h3>11.A Invoice Recovery (recap — §7)</h3>
+    <p>Documented above. Key custom fields: <code>GenerateInvoicePrivate_InvoiceRecovery.*</code>, <code>InvoiceRecovery_BankDetails.EFTAmountChangeOffsetDays / EFTDueDateChangeOffsetDays</code>, and the <code>InvoiceRecoveryPlans</code> / <code>ScheduleOverridePlans</code> custom tables in <code>Carrier_Billing_Schedule_Override_Plan_1_0_0_0</code>.</p>
+
+    <h3>11.B <code>CarrierRules_SendEmailEvent.Rules</code> — Hard-coded <code>False</code> <span class="b-gold">gotcha</span></h3>
+    <p>Verified verbatim in <code>Billing_InvoiceData_1_0_0_0.xml</code>:</p>
+    <pre class="xml"><span class="k">&lt;object</span> id=<span class="s">"CarrierRules_SendEmailEvent"</span><span class="k">&gt;</span>
+  <span class="k">&lt;minOccurs</span> value=<span class="s">"1"</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;maxOccurs</span> value=<span class="s">"1"</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;private</span> id=<span class="s">"CarrierRules_SendEmailEvent.Rules"</span> caption=<span class="s">""</span> type=<span class="s">"boolean"</span><span class="k">&gt;</span>
+    <span class="k">&lt;value</span> idref=<span class="s">"False"</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;/private&gt;</span>
+<span class="k">&lt;/object&gt;</span></pre>
+    <p>And the gate:</p>
+    <pre class="xml"><span class="k">&lt;comparison</span> compare=<span class="s">"eq"</span><span class="k">&gt;</span>
+  <span class="k">&lt;operand</span> idref=<span class="s">"CarrierRules_SendEmailEvent.Rules"</span> type=<span class="s">"boolean"</span> <span class="k">/&gt;</span>
+  <span class="k">&lt;operand</span> type=<span class="s">"string"</span> value=<span class="s">"False"</span> <span class="k">/&gt;</span>
+<span class="k">&lt;/comparison&gt;</span></pre>
+    <div class="callout"><b>Impact:</b> email dispatch is governed solely by <code>BaseRules_SendEmailEvent.Rules</code> — the carrier rule adds nothing. If email is desired to be gated at the carrier layer, this field must be flipped or overridden in a downstream carrier manuscript.</div>
+
+    <h3>11.C <code>Carrier_Billing_GetAmountToInvoice_PreEvents</code> — Placeholder <span class="b-gold">placeholder</span></h3>
+    <p><code>Billing/ManuScripts/Billing/CarrierBilling/Database/Carrier_Billing_GetAmountToInvoice_PreEvents_1_0_0_0.xml</code> inherits <code>Billing_GetAmountToInvoice_PreEvents_1_0_0_0</code> and contains only the <code>GetAmountToInvoice_DataPreEvent</code> field. Comment in source: <i>"Not yet implemented and placeholder for future implementation"</i>.</p>
+
+    <h3>11.D <code>Billing_InvoiceForm_1_0_0_0</code> inherits from Carrier Data (not Base) <span class="b-gold">unusual edge</span></h3>
+    <pre class="xml"><span class="k">&lt;properties</span> manuscriptID=<span class="s">"Billing_InvoiceForm_1_0_0_0"</span> … inherited=<span class="s">"Carrier_Billing_InvoiceData_1_0_0_0"</span> …<span class="k">&gt;</span></pre>
+    <p>The form manuscript inherits from the <b>carrier</b> invoice data manuscript, not the base. This is the reverse of the typical (Base ← Carrier) inheritance direction and means edits to <code>Carrier_Billing_InvoiceData_1_0_0_0</code> propagate into <code>Billing_InvoiceForm_1_0_0_0</code>.</p>
+
+    <h3>11.E Carrier Overlay Switches — Both Default <code>False</code></h3>
+    <ul>
+      <li><code>CarrierRules_BuildInstallmentAmounts.OverrideBaseRules = False</code></li>
+      <li><code>CarrierRules_BuildInstallmentAmounts.AddAdditionalRules = False</code></li>
+    </ul>
+    <p>Custom behavior is concentrated in the posting-rules layer (<code>Carrier_Billing_Events_PolicyTerm_Post_Actions_1_0_0_0</code>) and in <code>GenerateInvoicePrivate_InvoiceRecovery</code>, not in the frequency/amount calculators.</p>
+
+    <h3>11.F Duck Creek Async Retry — Empty Carrier Overlay</h3>
+    <p><code>Carrier_AutomatedProcess_AsyncRetry</code> (<code>inherited="DCT_AutomatedProcess_AsyncRetry"</code>) is an empty-model overlay — no carrier customization is present. Base DCT retry semantics apply as-is.</p>
+
+    <h3>11.G Effective-Dated Manuscript Resolution</h3>
+    <p>Repeated use of <code>BillingObj.getLatestManuScriptIdRq</code> to select effective-dated manuscript versions — applies to Email Invoice, FollowUp Manager, and Schedule-Override-Plan resolutions inside Invoice Recovery. Search key: <code>AsOfDate = DateTime.CurrentProcessingDate</code> or <code>PolicyTermEffectiveDate</code> depending on caller.</p>
+  </div>
+</details>
+
+<!-- ================ S13 ================ -->
+<details class="card" id="s13">
+  <summary><span class="num">§12</span> Production Support — Symptom → Location</summary>
+  <div class="body">
+    <table class="dc">
+      <thead><tr><th style="width:38%">Symptom</th><th>Investigation entry point</th></tr></thead>
+      <tbody>
+        <tr><td>Installment dates look wrong / skipped a cycle</td><td><code>Billing_Frequency_Calculator_1_0_0_0</code> → check <code>Scheduling_PolicyPlan.Freq</code>, <code>TargetDueDays</code>, <code>LastAvailDueDtDisp</code>; check <code>Account.AccountTypeCode</code> for <code>AGT</code> / <code>COL2</code> (skips lead-time + blackout).</td></tr>
+        <tr><td>Amounts don't sum to premium (off by cents)</td><td><code>Billing_InstallmentAmounts_Calculator_1_0_0_0</code> → <code>SplitInstallmentAmount.RemainingInstallmentSplitAmount</code> always lands on the <b>last</b> installment. Verify <code>Downpayment.DownpayPercentageXPath</code> Tran/Rec/Sub match.</td></tr>
+        <tr><td>Invoice never generated despite balance due</td><td>Check <code>GenerateInvoiceReturnCode</code> (<code>BelowThreshold</code>, <code>SuppressFirst</code>) + <code>AccountConfig_Invoice.PAInvThreshAmt</code> / <code>EFTInvThreshAmt</code> / <code>EInvThreshAmt</code>; also <code>AccountConfig_Invoice.SuppressFirst</code> + <code>InvoiceInput.FirstInvoice</code>.</td></tr>
+        <tr><td>Invoice due date "jumped" unexpectedly</td><td><code>GenerateInvoicePrivate_InvoiceRecovery</code> — check <code>AccountConfig_Scheduling.ScheduleOverridePlanCode</code> and <code>InvoiceRecoveryPlans</code> rows for <code>PushDueDate</code>, <code>PushDueDateNextInvoiceOffsetDays</code>, <code>RecoveryOffsetDays</code>.</td></tr>
+        <tr class="override"><td>Customer says email invoice never arrived</td><td>Verify <code>CarrierRules_SendEmailEvent.Rules</code> in deployed manuscript (<span class="b-gold">hard-coded <code>False</code> in reviewed version</span>) AND <code>Billing_Events_Electronic_Invoice_Bounce_Back_Task_1_0_0_0</code>.</td></tr>
+        <tr><td>PCN fired / didn't fire</td><td><code>Carrier_Billing_Events_FollowUp_PCN_Rules_1_0_0_0</code> → <code>ActivityRules_PCNEvaluation</code>; <code>PolicyTermConfig_FollowUp.PCNAllow</code> / <code>PCNTrigDays</code>; note NOL and Cancellation-DueToEquity <b>inherit from carrier PCN rules</b>, not base.</td></tr>
+        <tr><td>Async invoice/schedule job silently failed</td><td><code>Billing/BatchScripts/BatchRetryRequest.xml</code> — query semaphores with <code>ResponseStatus=failure</code>, <code>QueueStatus=4</code>. Check whether retry batch is scheduled.</td></tr>
+        <tr><td>ISTP ($10) fee missing/unexpected</td><td><code>Carrier_Billing_Events_PolicyTerm_Post_Actions_1_0_0_0</code> → <code>CarrierRules_PrevBilledFeeChargeEvent_WorkingFields.CheckConditionOtherThanAnnual</code> (Annual plans exempt).</td></tr>
+        <tr><td>Company template wrong</td><td>Check <code>_Account.ProcessingOrgUnitCode</code> AND <code>_PolicyTerm.PolicyTermProcessingOrgUnitCode</code> — both must match (AND). Cross-check <code>PaymentProviderFields.CarrierName</code> for payment-side variant.</td></tr>
+        <tr class="override"><td>ClaimsAccount invoice form not printing</td><td>Note the filename typo in the carrier overlay: <code>Carrier_Billing_ClaimsAccounttInvoiceForm_1_0_0_0.xml</code> <span class="b-gold">(double t)</span>. Its <code>manuscriptID</code> inside is spelled correctly.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<!-- ================ S14 ================ -->
+<details class="card" id="s14">
+  <summary><span class="num">§13</span> Change Log (Baseline v1 → Verified v2)</summary>
+  <div class="body">
+    <table class="dc">
+      <thead><tr><th style="width:3%">#</th><th style="width:26%">Baseline claim</th><th style="width:36%">Verified state</th><th>Evidence</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><code>Billing_InvoiceData_1_0_0_0</code> — parent not stated.</td><td><code>inherited=""</code> — this is a <b>root</b> manuscript.</td><td><code>Billing/ManuScripts/Billing/Billing/Invoice/Billing_InvoiceData_1_0_0_0.xml</code> properties tag.</td></tr>
+        <tr><td>2</td><td><code>Billing_Frequency_Calculator_1_0_0_0</code> — parent not stated.</td><td><code>inherited="Carrier_Billing_Base_Data_1_0_0_0"</code>.</td><td>Same file, properties tag.</td></tr>
+        <tr><td>3</td><td><code>Billing_Installment_Schedule_{1,3}_0_0_0</code> — parent not stated.</td><td>Both inherit <code>Carrier_Billing_Policy_Account_Common_1_0_0_0</code>.</td><td>Installments folder property tags.</td></tr>
+        <tr class="override"><td>4</td><td><code>Billing_InvoiceForm_1_0_0_0</code> — parent not stated.</td><td>Inherits <b><code>Carrier_Billing_InvoiceData_1_0_0_0</code></b> <span class="b-gold">unusual: form → carrier data</span>.</td><td>Invoice folder property tag.</td></tr>
+        <tr><td>5</td><td><code>Billing_Frequency_Calculator_Monthly_1_0_0_0</code> — not mentioned.</td><td>Additional variant, inherits <code>Carrier_Billing_Frequency_Calculator_1_0_0_0</code>.</td><td>Scheduling folder property tag.</td></tr>
+        <tr class="override"><td>6</td><td><code>GenerateInvoiceReturnCode</code> values described as "0/1/2" integers.</td><td>Actually <b>string keys</b> in <code>&lt;table … tableType="local"&gt;</code>: <code>Success</code> (<code>default="1"</code>), <code>BelowThreshold</code>, <code>SuppressFirst</code>. No integer mapping in this table.</td><td><code>Billing_InvoiceData_1_0_0_0.xml</code> table definition.</td></tr>
+        <tr><td>7</td><td>Baseline: discriminators in <code>Carrier_Forms_Letters_Manuscript_1_0_0_0</code> + <code>Carrier_Account_Breakdown_Letter_1_0_0_0</code>.</td><td>Confirmed. Also an inline <code>&lt;rowKeys&gt;</code> table lists all six values (<code>1, 9999, 2, 8888, 3, 7777</code>) verbatim.</td><td><code>Carrier_Forms_Letters_Manuscript_1_0_0_0.xml</code>.</td></tr>
+        <tr class="override"><td>8</td><td><code>Constants.CollectionsAgnecyAccountType</code> (spelling <i>Agnecy</i> in source).</td><td>Confirmed as literal spelling — do not "fix" this in any refactor.</td><td><code>Billing_Frequency_Calculator_1_0_0_0.xml</code>.</td></tr>
+        <tr class="override"><td>9</td><td><code>Carrier_AutomatedProcess_AsyncRetry</code> filename spelled <code>Carrrier</code> with three r's.</td><td>Confirmed literal filename in the repo. Inside <code>manuscriptID</code> is spelled correctly (<code>Carrier_AutomatedProcess_AsyncRetry</code>).</td><td>Directory listing + property tag.</td></tr>
+        <tr class="override"><td>10</td><td>Carrier overlays described as "thin empty-model overlays".</td><td>For all installment-schedule and invoice base manuscripts a <code>Carrier_Billing_*</code> overlay exists and inherits 1:1. <code>Carrier_Billing_InvoiceForm_1_0_0_0</code> also overrides three <code>documentSets</code> (<code>Invoice</code>, <code>LexisNexisInvoiceCopy</code>, <code>PFInsuredInvoice</code>) via <code>override="1"</code> — not empty.</td><td><code>CarrierBilling/Invoice/Carrier_Billing_InvoiceForm_1_0_0_0.xml</code>.</td></tr>
+        <tr class="override"><td>11</td><td>Carrier PCN Rules → carrier NOL inheritance mentioned in Posting-Rules memory but not baseline.</td><td>Confirmed: <code>Carrier_Billing_Events_NoticeOfLapse_Rules_1_0_0_0</code> and <code>Carrier_Billing_Events_Cancellation_DueToEquity_1_0_0_0</code> both inherit <code>Carrier_Billing_Events_FollowUp_PCN_Rules_1_0_0_0</code>, not the base PCN rules.</td><td>FollowUpEvents folder property tags.</td></tr>
+        <tr><td>12</td><td><code>CarrierRules_BuildInstallmentAmounts.OverrideBaseRules</code> / <code>AddAdditionalRules</code> — described in baseline.</td><td>Verified both = <code>False</code> at base level. No live carrier customization observed.</td><td><code>Billing_InstallmentAmounts_Calculator_1_0_0_0.xml</code>.</td></tr>
+        <tr class="override"><td>13</td><td>Baseline unsure whether <code>Billing_ClaimsAccountInvoiceData_1_0_0_0</code> matters.</td><td>Additional root manuscript for claims-account invoicing; has its own carrier overlay. Filename of form-side carrier overlay contains a typo: <code>Carrier_Billing_ClaimsAccounttInvoiceForm_1_0_0_0.xml</code> <span class="b-gold">(double t)</span>.</td><td>Invoice folder listing + property tag.</td></tr>
+        <tr class="override"><td>14</td><td>Baseline error-code section cites ErrorCode 1 for <code>RaiseError_NoInstallments</code>.</td><td>Field is a <code>boolean</code> in <code>Billing_InstallmentAmounts_Calculator_1_0_0_0</code> — specific integer <code>data.ErrorCode</code> is set in the parent (<code>Carrier_Billing_Base_Data_1_0_0_0</code>). <span class="b-gold">Not Fully Verified</span> at this manuscript layer.</td><td><code>Billing_InstallmentAmounts_Calculator_1_0_0_0.xml</code>.</td></tr>
+        <tr><td>15</td><td><code>Billing_Schedule_Override_Plan_1_0_0_0</code> — inheritance not stated.</td><td>Inherits <code>Carrier_Billing_Schedule_Override_Data_1_0_0_0</code>; <code>Billing_Schedule_Override_Data_1_0_0_0</code> is a root (<code>inherited=""</code>).</td><td>Scheduling folder property tags.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<!-- ================ S15 ================ -->
+<details class="card" id="s15">
+  <summary><span class="num">§14</span> Gaps &amp; Risks (Not Found in Codebase / Flagged) <span class="tag-gold">10 flagged</span></summary>
+  <div class="body">
+    <ol>
+      <li><b><code>LateEnterStgy</code> / <code>RescRdstStgy</code> branching logic</b> — strategy-code values referenced but branching code path is <span class="b-gold">Not Found in Codebase</span> (search scope: <code>Billing/ManuScripts/Billing/Billing/Scheduling/*.xml</code>). Likely resolved inside a native <code>BillSchedule.buildRq</code> verb implementation.</li>
+      <li><b>Trigger for <code>GenerateInvoiceInput.OutOfSchedule=True</code></b> — <span class="b-gold">Not Found in Codebase</span> (search scope: <code>Billing/ManuScripts/**/*.xml</code>). Presumed to be a Billing Console UI action.</li>
+      <li><b>Standalone "regenerate a single invoice" admin action</b> — no ManuScript action found outside the recovery flow's <code>BillInvoice.generateSingleInvoiceRq</code>. <span class="b-gold">Not Found in Codebase</span> as a user-triggered path.</li>
+      <li><b><code>CarrierRules_SendEmailEvent.Rules = False</code></b> — verified in reviewed manuscript; confirm live deployed manuscript before assuming email is fully carrier-customized.</li>
+      <li><b>No dedicated short-term-policy rule set</b> — short terms are an emergent property of the generic date-window algorithm. If distinct short-term behavior is required, it is new development.</li>
+      <li><b>Two independent company-discriminator mechanisms</b> (<code>ProcessingOrgUnitCode</code> pair vs. <code>PaymentProviderFields.CarrierName</code> first-letter match in <code>Carrier_Billing_PaymentProcessing.xml</code>) — carried forward from prior Pay-Plan memory; still not synchronized.</li>
+      <li><b>Manatee document series uses <code>MIE NTC 04 04 10 23</code></b>, not the Safepoint/Cajun <code>SIC NTC 04 07 03 16</code> series — documentation-maintenance risk if the two are expected to evolve together.</li>
+      <li><b>Numeric ErrorCode for <code>RaiseError_NoInstallments</code></b> — set in the inherited base manuscript (<code>Carrier_Billing_Base_Data_1_0_0_0</code>), not in the calculator itself; <span class="b-gold">Not Fully Verified</span> at this layer.</li>
+      <li><b>Filename typo <code>Carrier_Billing_ClaimsAccounttInvoiceForm_1_0_0_0.xml</code></b> <span class="b-gold">(double t)</span> — production file, presumably relied upon by manuscript-ID lookups.</li>
+      <li><b>Filename <code>Carrrier_AutomatedAsyncRetry.xml</code></b> <span class="b-gold">(triple r)</span> — same class of risk; <code>manuscriptID</code> inside is spelled correctly, so lookups by ID are fine, but any file-path-based tooling must respect the literal filename.</li>
+    </ol>
+  </div>
+</details>
+
+
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Billing Follow-Up Analysis — Safepoint / Cajun / Manatee (v2, Codebase-Verified)</title>
+<style>
+  :root {
+    --sfp-blue: #0b3d91;
+    --cic-orange: #b8531a;
+    --mie-teal: #1a7373;
+    --warn-bg: #fff8e1;
+    --warn-bd: #e8b800;
+    --defect-bg: #fdecea;
+    --defect-bd: #d32f2f;
+    --gap-bg: #eef4ff;
+    --gap-bd: #3d5a80;
+    --info-bg: #e8f5e9;
+    --info-bd: #2e7d32;
+    --border: #d0d7de;
+    --text: #24292f;
+    --muted: #57606a;
+    --bg-alt: #f6f8fa;
+    --code-bg: #f4f6f8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--text); background: #fff; line-height: 1.5; font-size: 14px; }
+  a { color: var(--sfp-blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  header.banner {
+    background: linear-gradient(90deg, var(--sfp-blue), #1e5db8);
+    color: #fff;
+    padding: 14px 24px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    position: sticky; top: 0; z-index: 100;
+  }
+  header.banner h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  header.banner .meta { font-size: 11px; opacity: 0.9; margin-top: 3px; display: flex; flex-wrap: wrap; gap: 12px; }
+  header.banner .tag { background: rgba(255,255,255,0.2); padding: 1px 8px; border-radius: 10px; font-weight: 600; }
+  .layout { display: flex; align-items: flex-start; }
+  nav.toc {
+    width: 300px; min-width: 300px; flex: 0 0 300px;
+    padding: 20px 12px 20px 20px;
+    border-right: 1px solid var(--border);
+    background: var(--bg-alt);
+    position: sticky; top: 54px; height: calc(100vh - 54px);
+    overflow-y: auto;
+    font-size: 12.5px;
+  }
+  nav.toc h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0 0 8px 0; }
+  nav.toc ol { list-style: none; padding-left: 0; margin: 0; }
+  nav.toc ol ol { padding-left: 16px; font-size: 12px; }
+  nav.toc li { margin: 3px 0; }
+  nav.toc a { color: var(--text); display: block; padding: 2px 4px; border-radius: 3px; }
+  nav.toc a:hover { background: #dbe5ef; text-decoration: none; }
+  main.content {
+    padding: 20px 32px 60px;
+    max-width: 1200px;
+    flex: 1;
+    min-width: 0;
+  }
+  h1, h2, h3, h4 { color: var(--sfp-blue); margin-top: 2em; margin-bottom: 0.4em; line-height: 1.25; }
+  h1 { font-size: 24px; border-bottom: 2px solid var(--sfp-blue); padding-bottom: 6px; }
+  h2 { font-size: 20px; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-top: 2.5em; }
+  h3 { font-size: 16px; color: #333; }
+  h4 { font-size: 14px; color: #333; }
+  p { margin: 0.6em 0; }
+  code, pre { font-family: "Cascadia Code", Consolas, "Courier New", monospace; font-size: 12.5px; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; border: 1px solid #eaecef; }
+  pre { background: var(--code-bg); padding: 12px 14px; overflow-x: auto; border-radius: 5px; border: 1px solid #eaecef; line-height: 1.35; }
+  pre.ascii-diagram { background: #fafbfc; font-size: 11.5px; line-height: 1.3; }
+  table.grid { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 12.5px; }
+  table.grid th, table.grid td { border: 1px solid var(--border); padding: 6px 9px; text-align: left; vertical-align: top; }
+  table.grid th { background: #eef2f7; font-weight: 600; color: var(--sfp-blue); }
+  table.grid tr:nth-child(even) td { background: #fafbfc; }
+  table.grid caption { caption-side: top; text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 4px 0; }
+  .callout { padding: 10px 14px; border-left: 4px solid; border-radius: 3px; margin: 12px 0; font-size: 13px; }
+  .callout--info { background: var(--info-bg); border-color: var(--info-bd); }
+  .callout--warn { background: var(--warn-bg); border-color: var(--warn-bd); }
+  .callout--defect { background: var(--defect-bg); border-color: var(--defect-bd); }
+  .callout--gap { background: var(--gap-bg); border-color: var(--gap-bd); }
+  .callout strong { color: inherit; }
+  .company-sfp { color: var(--sfp-blue); font-weight: 600; }
+  .company-cic { color: var(--cic-orange); font-weight: 600; }
+  .company-mie { color: var(--mie-teal); font-weight: 600; }
+  .disabled { color: var(--defect-bd); font-weight: 600; }
+  .enabled { color: var(--info-bd); font-weight: 600; }
+  .svg-diagram { display: block; margin: 12px auto; max-width: 100%; background: #fff; border: 1px solid var(--border); border-radius: 4px; }
+  ul, ol { padding-left: 22px; }
+  ul li, ol li { margin: 3px 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  .small { font-size: 12px; color: var(--muted); }
+  .anchor { scroll-margin-top: 70px; }
+
+  @media print {
+    header.banner { position: static; box-shadow: none; background: #fff; color: #000; border-bottom: 2px solid #000; }
+    header.banner h1 { color: #000; }
+    header.banner .tag { background: #eee; color: #000; }
+    nav.toc { display: none; }
+    main.content { max-width: 100%; padding: 10px; }
+    body { font-size: 11pt; color: #000; }
+    h1, h2, h3, h4 { color: #000; page-break-after: avoid; }
+    table.grid, pre, .callout, .svg-diagram { page-break-inside: avoid; }
+    a { color: #000; text-decoration: none; }
+    .callout--info, .callout--warn, .callout--defect, .callout--gap { border-left-width: 3px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="banner">
+  <h1>Billing Follow-Up Analysis — Safepoint / Cajun / Manatee</h1>
+  <div class="meta">
+    <span class="tag">v2 — 2026-08-10</span>
+    <span class="tag">Codebase-verified</span>
+    <span>Source of truth: <code>f:\DuckCreek\Billing</code></span>
+    <span>Companies: <span class="company-sfp">SFP 9999/1</span> · <span class="company-cic">CIC 8888/2</span> · <span class="company-mie">MIE 7777/3</span></span>
+  </div>
+</header>
+
+<div class="layout">
+
+<nav class="toc" aria-label="Table of Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#s1">1. Executive Summary</a></li>
+    <li><a href="#s2">2. Scope of Analysis</a></li>
+    <li><a href="#s3">3. Framework Overview</a></li>
+    <li><a href="#s4">4. Manuscript Inheritance Graph</a></li>
+    <li><a href="#s5">5. Notice Lifecycle</a></li>
+    <li><a href="#s6">6. Process-by-Process Analysis</a>
+      <ol>
+        <li><a href="#s6-1">6.1 PCN</a></li>
+        <li><a href="#s6-2">6.2 Reminder Notices (disabled)</a></li>
+        <li><a href="#s6-3">6.3 Cancellation (NOC/NOL/NOW)</a></li>
+        <li><a href="#s6-4">6.4 Late Charges (disabled)</a></li>
+        <li><a href="#s6-5">6.5 Internal Collections</a></li>
+        <li><a href="#s6-6">6.6 Custom Follow-Ups</a></li>
+      </ol>
+    </li>
+    <li><a href="#s7">7. Company-Level Comparison</a></li>
+    <li><a href="#s8">8. Notice Trigger Matrix</a></li>
+    <li><a href="#s9">9. Batch Process Inventory</a></li>
+    <li><a href="#s10">10. Configuration References</a></li>
+    <li><a href="#s11">11. Technical Components</a></li>
+    <li><a href="#s12">12. Company Variance Summary</a></li>
+    <li><a href="#s13">13. Suppression Rules</a></li>
+    <li><a href="#s14">14. Integration Dependencies</a></li>
+    <li><a href="#s15">15. Risks &amp; Improvements</a></li>
+    <li><a href="#s16">16. Baseline → Verified Change Log</a></li>
+    <li><a href="#s17">17. Testing Recommendations</a></li>
+    <li><a href="#s18">18. Final Findings</a></li>
+    <li><a href="#s19">19. Overview &amp; Summary</a></li>
+  </ol>
+</nav>
+
+<main class="content">
+
+<div class="callout callout--info">
+  <strong>Method.</strong> Every claim below is anchored to a specific manuscript ID, <code>&lt;row value="…"/&gt;</code>, <code>&lt;condition&gt;</code> operand, <code>inherited="…"</code>, or verb name in <code>f:\DuckCreek\Billing\ManuScripts\</code> or <code>f:\DuckCreek\Billing\Shared\</code>. The input baseline (<code>x:\SFP Demo\Billing\billing_followup_analysis_safepoint_cajun_manatee.md</code>) was used only as a reading list; every substantive baseline claim was re-verified against the source. Corrections are enumerated in Section 16.
+</div>
+
+<h2 id="s1" class="anchor">1. Executive Summary</h2>
+
+<p>Safepoint Billing's Follow-Up subsystem uses the standard Duck Creek FollowUp Manager pattern:</p>
+
+<ul>
+  <li>One dispatch manuscript — <code>Carrier_Billing_Events_FollowUp_Manager_1_0_0_0</code> (<code>inherited="Billing_Events_FollowUp_Manager_1_0_0_0"</code>) — resolves calls into five processor types (<strong>PCN, REIN, LTCH, RMDR, COL</strong>) across three flow types (<strong>Evaluate, Execute, Generate</strong>) via its <code>ProcessorsConfiguration</code> table (<code>tableType="local" override="1"</code>).</li>
+  <li><strong>No Duck Creek Workflow-engine (BPM/state machine) artifact drives any follow-up processing.</strong> <code>Carrier_Billing_Workflow.xml</code> has an empty <code>&lt;model/&gt;</code>.</li>
+  <li>All orchestration is manuscript-rule chaining + the <code>ScheduledActivity</code> status machine (P → I → C/X/F) + the .NET services <code>DuckCreek.BillingFollowUpObj.dll</code> and <code>DuckCreek.BillingMonitoring.dll</code>.</li>
+</ul>
+
+<div class="callout callout--defect">
+  <strong>Critical finding #1 — LTCH and RMDR are silently disabled at the carrier layer.</strong>
+  The carrier <code>ProcessorsConfiguration</code> table (<code>override="1"</code>) routes all three flow rows for LTCH and RMDR to no-op fields:
+  <code>data.SF_DisableLTCH</code> (<code>&lt;value idref="False"/&gt;</code>) and <code>data.SF_DisableRMDR</code> (<code>&lt;value idref="False"/&gt;</code>). Confirmed by reading both stub manuscripts.
+</div>
+
+<div class="callout callout--defect">
+  <strong>Critical finding #2 — Reminder Notice base Execute is itself a stub.</strong>
+  Even if the carrier dispatch were fixed, <code>Base_ExecuteActivities_WorkingData.Execute_ReminderNoticeProcessing</code> guards <code>&lt;value idref="True"/&gt;</code> under an <code>&lt;if&gt;</code> whose <code>&lt;condition idref="RaiseError_WorkFields.RaiseError_ReminderNoticeNotImplemented"/&gt;</code> fires the error. Two-layer fix required.
+</div>
+
+<div class="callout callout--info">
+  <strong>Critical finding #3 — PCN, Reinstate, Internal-Collections are fully wired.</strong>
+  Confirmed real target fields in dispatch and full method bodies in the rule manuscripts.
+</div>
+
+<div class="callout callout--warn">
+  <strong>Critical finding #4 — Business rules are 100% company-agnostic.</strong>
+  No <code>ProcessingOrgUnitCode</code>-keyed branch appears in any timing, tolerance, cadence, plan-code, or threshold table. The only genuine per-company business-rule variance is the AOI/mortgagee copy-distribution filter for NOC / NOL / NOW: <span class="company-sfp">SFP = 10 interest types</span>; <span class="company-cic">CIC</span> / <span class="company-mie">MIE = PremiumFinance only</span>.
+</div>
+
+<div class="callout callout--warn">
+  <strong>Critical finding #5 — Billing-initiated Policy transactions bypass Policy UI.</strong>
+  Notice of Lapse (<code>Carrier_Billing_Events_NoticeOfLapse_Rules_1_0_0_0</code>) and Equity-Based Cancellation (<code>Carrier_Billing_Events_Cancellation_DueToEquity_1_0_0_0</code>) invoke <code>TransACT.startTransactionRq code="Cancel"</code> reason <code>nonPay</code> via <code>Send.postRq</code> with <code>policyInterface_DCT.url/username/password</code> web-config settings. No explicit <code>onFailure</code> handler at the <code>TransACT</code> node itself.
+</div>
+
+<div class="callout callout--gap">
+  <strong>Critical finding #6 — No named batch jobs for any follow-up type.</strong>
+  Only <code>BatchScript_RetryRequests</code> (generic async retry) exists in <code>Billing/BatchScripts/</code>. All notice timing is done by the Billing Monitor Windows service (<code>DuckCreek.BillingMonitoring.dll</code>) — its schedule is outside the manuscript tree.
+</div>
+
+<h2 id="s2" class="anchor">2. Scope of Analysis</h2>
+
+<p><strong>Follow-up processes reviewed:</strong> PCN &amp; RPCN, RMDR, NOC/NOL/NOW, LTCH, COL (Letter1/Letter2/Letter3/Task1), REIN, Equity-Based Cancellation, NOCF, MPR.</p>
+<p><strong>Writing companies:</strong> Safepoint (SIC/SFP), Cajun (CIC), Manatee (MIE). No fourth company found in code.</p>
+
+<table class="grid">
+  <caption>Files inspected (paths relative to <code>f:\DuckCreek\</code>)</caption>
+  <thead><tr><th>Layer</th><th>Path</th></tr></thead>
+  <tbody>
+    <tr><td>Carrier follow-up dispatch &amp; rules</td><td><code>Billing/ManuScripts/Billing/CarrierBilling/FollowUpEvents/*.xml</code> (14 files)</td></tr>
+    <tr><td>Base follow-up dispatch &amp; rules</td><td><code>Billing/ManuScripts/Billing/Billing/FollowUpEvents/*.xml</code> (11 files)</td></tr>
+    <tr><td>Carrier forms/letters (company discriminator, AOI, templates)</td><td><code>Billing/ManuScripts/Billing/CarrierBilling/Base/Carrier_Forms_Letters_Manuscript_1_0_0_0.xml</code></td></tr>
+    <tr><td>Carrier late-charge charge-plan overlay (empty)</td><td><code>Billing/ManuScripts/Billing/CarrierBilling/Charges/Carrier_Billing_Charges_LateCharges_Rules_US_1_0_0_0.xml</code></td></tr>
+    <tr><td>Carrier billing workflow (empty)</td><td><code>Billing/ManuScripts/Billing/CarrierBilling/Base/Carrier_Billing_Workflow.xml</code></td></tr>
+    <tr><td>Carrier MPR (empty)</td><td><code>Billing/ManuScripts/Billing/CarrierBilling/FollowUpGenerateMPR/Carrier_Billing_FollowUp_Generate_MPR_1_0_0_0.xml</code> (+ siblings)</td></tr>
+    <tr><td>Async retry batch</td><td><code>Billing/BatchScripts/BatchRetryRequest.xml</code>, <code>Billing/Shared/BatchScriptsCatalog.xml</code></td></tr>
+    <tr><td>Service catalog / verb registry</td><td><code>Billing/Shared/BillingConfig.xml</code>, <code>BillingRequestMap.xml</code>, <code>ManuScriptCatalog.xml</code></td></tr>
+  </tbody>
+</table>
+
+<h2 id="s3" class="anchor">3. Framework Overview (ManuScript Follow-Up Engine)</h2>
+
+<p>Duck Creek's Billing Follow-Up engine is a <strong>table-driven dispatcher</strong> running inside the standard ManuScript rules runtime. The engine is invoked from the Policy-to-Billing event bridge:</p>
+
+<pre>Billing/Shared/BillingConfig.xml
+  &lt;Event name="Billing_ScheduleFollowUpActivitiesEvent"
+         manuscript="Carrier_Billing_Events_Account_Actions_1_0_0_0"
+         field="ScheduleFollowUpActivitiesEvent.Value"
+         transactions="*" /&gt;</pre>
+
+<p>Each event call flows into <code>Carrier_Billing_Events_FollowUp_Manager_1_0_0_0</code>, which discovers the target field via a local lookup table:</p>
+
+<pre>&lt;table id="ProcessorsConfiguration" tableType="local" separator="," override="1"&gt;
+  &lt;fields&gt;
+    &lt;field type="int" name="FieldId" /&gt;
+    &lt;field type="int" name="ManuScriptVersionId" /&gt;
+    &lt;field type="int" name="OrderId" /&gt;
+    &lt;field type="int" name="ProcessingLevel" /&gt;
+  &lt;/fields&gt;
+  &lt;rowKeys name="ProcessorType" type="string" find="eq"&gt;
+    &lt;key value="PCN" /&gt;  &lt;key value="REIN" /&gt; &lt;key value="LTCH" /&gt;
+    &lt;key value="RMDR" /&gt; &lt;key value="COL" /&gt;
+  &lt;/rowKeys&gt;
+  &lt;rowKeys name="FlowType" type="string" find="eq"&gt;
+    &lt;key value="Evaluate" /&gt; &lt;key value="Execute" /&gt; &lt;key value="Generate" /&gt;
+  &lt;/rowKeys&gt;
+&lt;/table&gt;</pre>
+
+<p><strong>Key framework concepts:</strong></p>
+<ul>
+  <li><strong>Field kinds.</strong> <code>&lt;public&gt;</code> (path-bound, session-visible), <code>&lt;private&gt;</code> (in-memory), <code>&lt;request verb="…"&gt;</code> (external service call), <code>&lt;lookup tableRef="…"&gt;</code>, <code>&lt;iterator&gt;</code>, <code>&lt;affects&gt;&lt;reference idref="…" effect="preEffect|postEffect|setValue"/&gt;</code> (data-flow graph).</li>
+  <li><strong>Inheritance semantics.</strong> <code>&lt;properties inherited="ParentManuscriptID"&gt;</code>; carrier overlays with <code>override="1"</code> silently replace a same-id field/table wholesale, otherwise contents are additive.</li>
+  <li><strong>OverrideBaseRules / AddAdditionalRules gates.</strong> Standard carrier-overlay idiom — always inspect both booleans before assuming a carrier override is active.</li>
+  <li><strong>Verb-based service calls.</strong> All external interactions use <code>&lt;request verb="X.Y"&gt;</code>. Resolved via <code>Billing/Shared/BillingRequestMap.xml</code> to a .NET assembly.</li>
+  <li><strong>Error propagation.</strong> <code>&lt;onFailure idref="RaiseError_WorkFields.Xxx"&gt;</code>; empty <code>&lt;onFailure value=""/&gt;</code> means silent swallow.</li>
+</ul>
+
+<table class="grid">
+  <caption>Company discriminator — paired-code AND pattern (verified in <code>Carrier_Forms_Letters_Manuscript_1_0_0_0.xml</code>)</caption>
+  <thead><tr><th>Company</th><th><code>_Account.ProcessingOrgUnitCode</code></th><th><code>_PolicyTerm.PolicyTermProcessingOrgUnitCode</code></th></tr></thead>
+  <tbody>
+    <tr><td class="company-sfp">Safepoint</td><td>9999</td><td>1</td></tr>
+    <tr><td class="company-cic">Cajun</td><td>8888</td><td>2</td></tr>
+    <tr><td class="company-mie">Manatee</td><td>7777</td><td>3</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout--warn">
+  <strong>Exception.</strong> <code>Carrier_Billing_Events_FollowUp_COL_Rules_1_0_0_0.xml → Activity_GenerateDefaults.IsSafepoint/IsCajun/IsManatee</code> uses only <code>Activity_GenerateDefaults.ProcessingOrgUnitCodeCheck</code> (PolicyTerm-only via <code>BillAccount.getAccountPolicyTermRs</code>). Deviates from the AND-pattern used elsewhere — see Risk 6.
+</div>
+
+<h2 id="s4" class="anchor">4. Manuscript Inheritance Graph</h2>
+
+<pre class="ascii-diagram">Billing_Events_FollowUp_Data_1_0_0_0
+    │
+    ├── inherited by → Billing_Events_FollowUp_Manager_1_0_0_0            (base dispatch)
+    │                        │
+    │                        └── inherited by → Carrier_Billing_Events_FollowUp_Manager_1_0_0_0
+    │                                                (carrier dispatch — SF_DisableLTCH/RMDR override)
+    │
+    ├── inherited by → Billing_Events_FollowUp_PCN_Rules_1_0_0_0          (base PCN)
+    │                        │
+    │                        └── inherited by → Carrier_Billing_Events_FollowUp_PCN_Rules_1_0_0_0
+    │                                                │  (carrier PCN — table overrides + custom renewal-PCN branching)
+    │                                                │
+    │                                                ├── inherited by → Carrier_Billing_Events_NoticeOfLapse_Rules_1_0_0_0
+    │                                                │                    (Safepoint-authored; direct Cancel via TransACT)
+    │                                                │
+    │                                                └── inherited by → Carrier_Billing_Events_Cancellation_DueToEquity_1_0_0_0
+    │                                                                     (Safepoint-authored; ECN scheduling + direct Cancel)
+    │
+    ├── inherited by → Billing_Events_FollowUp_Reinstate_Rules_1_0_0_0
+    │                        └── inherited by → Carrier_Billing_Events_FollowUp_Reinstate_Rules_1_0_0_0
+    │
+    ├── inherited by → Billing_Events_FollowUp_LateCharge_Rules_1_0_0_0    (fully implemented base — unreachable)
+    │                        └── inherited by → Carrier_Billing_Events_FollowUp_LateCharge_Rules_1_0_0_0
+    │                                                (body = data.SF_DisableLTCH only)
+    │
+    ├── inherited by → Billing_Events_FollowUp_ReminderNotice_Rules_1_0_0_0
+    │                        │   (Execute path guarded by RaiseError_ReminderNoticeNotImplemented)
+    │                        └── inherited by → Carrier_Billing_Events_FollowUp_ReminderNotice_Rules_1_0_0_0
+    │                                                (body = data.SF_DisableRMDR only)
+    │
+    └── inherited by → Billing_Events_FollowUp_COL_Rules_1_0_0_0
+                             └── inherited by → Carrier_Billing_Events_FollowUp_COL_Rules_1_0_0_0
+                                                     (SFPC cadence + CollectionPlans override + IsSafepoint/IsCajun/IsManatee + FormsEmailData)
+
+Independent (empty carrier shells):
+  Billing_Workflow                                → Carrier_Billing_Workflow                        (both empty)
+  Billing_Charges_LateCharges_Rules_US_1_0_0_0    → Carrier_Billing_Charges_LateCharges_Rules_US_1_0_0_0  (carrier is &lt;model /&gt;)
+  Billing_FollowUp_Generate_MPR_1_0_0_0           → Carrier_Billing_FollowUp_Generate_MPR_1_0_0_0   (carrier is &lt;model /&gt;)
+  Billing_FollowUp_Process_MPR_1_0_0_0            → Carrier_Billing_FollowUp_Process_MPR_1_0_0_0    (carrier is &lt;model /&gt;)
+
+Templates:
+  Billing_Forms_Letters_Manuscript_1_0_0_0
+      └── inherited by → Carrier_Forms_Letters_Manuscript_1_0_0_0
+                             (Company discriminator + AOI filter + NOC/NOL/NOW documentSets + AgencyMail integration)</pre>
+
+<div class="callout callout--info">
+  <strong>Baseline correction.</strong> Baseline stated base <code>Billing_Events_FollowUp_Manager_1_0_0_0</code> inherits <code>""</code>. Actual: <code>inherited="Carrier_Billing_Events_FollowUp_Data_1_0_0_0"</code> — the "base" manager references a Carrier-prefixed data manuscript. Recorded for honesty; not a functional issue.
+</div>
+
+<h3>Static SVG diagram — dispatch fan-out</h3>
+
+<svg class="svg-diagram" viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dispatch fan-out from FollowUp Manager to five processors">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0b3d91" />
+    </marker>
+    <marker id="arrR" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d32f2f" />
+    </marker>
+  </defs>
+  <style>
+    .box { fill: #ffffff; stroke: #0b3d91; stroke-width: 1.5; }
+    .box-disabled { fill: #fdecea; stroke: #d32f2f; stroke-width: 1.5; }
+    .box-custom { fill: #e8f5e9; stroke: #2e7d32; stroke-width: 1.5; }
+    .label { font: 12px "Segoe UI", sans-serif; fill: #24292f; }
+    .label-title { font: 600 13px "Segoe UI", sans-serif; fill: #0b3d91; }
+    .label-title-off { font: 600 13px "Segoe UI", sans-serif; fill: #d32f2f; }
+    .label-small { font: 11px "Segoe UI", sans-serif; fill: #57606a; }
+    .edge { stroke: #0b3d91; stroke-width: 1.5; fill: none; }
+    .edge-off { stroke: #d32f2f; stroke-width: 1.5; stroke-dasharray: 4,3; fill: none; }
+  </style>
+
+  <!-- Manager -->
+  <rect class="box" x="330" y="30" width="240" height="60" rx="6"/>
+  <text class="label-title" x="450" y="55" text-anchor="middle">FollowUp Manager (Carrier)</text>
+  <text class="label" x="450" y="72" text-anchor="middle">ProcessorsConfiguration (override="1")</text>
+  <text class="label-small" x="450" y="86" text-anchor="middle">5 processor types × 3 flow types = 15 rows</text>
+
+  <!-- 5 processors -->
+  <!-- PCN -->
+  <rect class="box" x="30" y="180" width="150" height="70" rx="6"/>
+  <text class="label-title" x="105" y="205" text-anchor="middle">PCN</text>
+  <text class="label" x="105" y="222" text-anchor="middle">OrderId 1 · Policy</text>
+  <text class="label-small" x="105" y="238" text-anchor="middle">Carrier_..._PCN_Rules</text>
+  <text class="enabled" font-size="11" x="105" y="252" text-anchor="middle" fill="#2e7d32">✓ Wired</text>
+
+  <!-- REIN -->
+  <rect class="box" x="200" y="180" width="150" height="70" rx="6"/>
+  <text class="label-title" x="275" y="205" text-anchor="middle">REIN</text>
+  <text class="label" x="275" y="222" text-anchor="middle">OrderId 2 · Policy</text>
+  <text class="label-small" x="275" y="238" text-anchor="middle">Carrier_..._Reinstate_Rules</text>
+  <text class="enabled" font-size="11" x="275" y="252" text-anchor="middle" fill="#2e7d32">✓ Wired</text>
+
+  <!-- RMDR -->
+  <rect class="box-disabled" x="370" y="180" width="150" height="70" rx="6"/>
+  <text class="label-title-off" x="445" y="205" text-anchor="middle">RMDR</text>
+  <text class="label" x="445" y="222" text-anchor="middle">OrderId 3 · Account</text>
+  <text class="label-small" x="445" y="238" text-anchor="middle">→ data.SF_DisableRMDR</text>
+  <text class="disabled" font-size="11" x="445" y="252" text-anchor="middle" fill="#d32f2f">✗ Disabled</text>
+
+  <!-- LTCH -->
+  <rect class="box-disabled" x="540" y="180" width="150" height="70" rx="6"/>
+  <text class="label-title-off" x="615" y="205" text-anchor="middle">LTCH</text>
+  <text class="label" x="615" y="222" text-anchor="middle">OrderId 4 · Account</text>
+  <text class="label-small" x="615" y="238" text-anchor="middle">→ data.SF_DisableLTCH</text>
+  <text class="disabled" font-size="11" x="615" y="252" text-anchor="middle" fill="#d32f2f">✗ Disabled</text>
+
+  <!-- COL -->
+  <rect class="box" x="710" y="180" width="150" height="70" rx="6"/>
+  <text class="label-title" x="785" y="205" text-anchor="middle">COL</text>
+  <text class="label" x="785" y="222" text-anchor="middle">OrderId 5 · Policy</text>
+  <text class="label-small" x="785" y="238" text-anchor="middle">Carrier_..._COL_Rules</text>
+  <text class="enabled" font-size="11" x="785" y="252" text-anchor="middle" fill="#2e7d32">✓ Wired</text>
+
+  <!-- Custom manuscripts (branching from PCN Rules) -->
+  <rect class="box-custom" x="30" y="330" width="200" height="60" rx="6"/>
+  <text class="label-title" x="130" y="352" text-anchor="middle" fill="#2e7d32">NOL (custom)</text>
+  <text class="label-small" x="130" y="368" text-anchor="middle">inherits Carrier PCN Rules</text>
+  <text class="label-small" x="130" y="382" text-anchor="middle">TransACT Cancel via Send.postRq</text>
+
+  <rect class="box-custom" x="250" y="330" width="220" height="60" rx="6"/>
+  <text class="label-title" x="360" y="352" text-anchor="middle" fill="#2e7d32">Equity-Cancel (custom)</text>
+  <text class="label-small" x="360" y="368" text-anchor="middle">inherits Carrier PCN Rules</text>
+  <text class="label-small" x="360" y="382" text-anchor="middle">Immediate Cancel OR schedule ECN</text>
+
+  <rect class="box-custom" x="490" y="330" width="200" height="60" rx="6"/>
+  <text class="label-title" x="590" y="352" text-anchor="middle" fill="#2e7d32">NOCF (custom)</text>
+  <text class="label-small" x="590" y="368" text-anchor="middle">in Carrier PCN Rules</text>
+  <text class="label-small" x="590" y="382" text-anchor="middle">Follow-up PCN after partial payment</text>
+
+  <!-- edges -->
+  <path class="edge" d="M 400,90 Q 200,120 105,180" marker-end="url(#arr)"/>
+  <path class="edge" d="M 430,90 Q 320,130 275,180" marker-end="url(#arr)"/>
+  <path class="edge-off" d="M 450,90 Q 447,130 445,180" marker-end="url(#arrR)"/>
+  <path class="edge-off" d="M 480,90 Q 570,130 615,180" marker-end="url(#arrR)"/>
+  <path class="edge" d="M 500,90 Q 700,120 785,180" marker-end="url(#arr)"/>
+
+  <path class="edge" d="M 105,250 Q 85,280 105,330" marker-end="url(#arr)"/>
+  <path class="edge" d="M 130,250 Q 200,280 300,330" marker-end="url(#arr)"/>
+  <path class="edge" d="M 130,250 Q 350,290 550,330" marker-end="url(#arr)"/>
+
+  <text class="label-small" x="450" y="420" text-anchor="middle">Blue = live dispatch · Red dashed = routed to no-op stub · Green = Safepoint-custom manuscripts inheriting PCN Rules</text>
+</svg>
+
+<h2 id="s5" class="anchor">5. High-Level Notice Lifecycle</h2>
+
+<h3>Narrative flow (13 steps)</h3>
+<ol>
+  <li><strong>Trigger</strong> — Invoice generation (<code>FollowUpParameters.CalledFrom="Invoice"</code>), payment/credit/debit posting, due-date change, or manual action (Start, ManualStart, Letter1..3, Task1, Pause, Resume, Restart, ManualStop, PolicyTransfer, Update).</li>
+  <li><strong>Processor dispatch</strong> — Manager reads <code>ProcessorsConfiguration</code> via <code>ManuScript.getFieldDetailRq</code>. <code>Processor.IsEnabled</code> is the first suppression gate.</li>
+  <li><strong>Eligibility evaluation</strong> — PCN: hold codes, <code>PCNAllow</code>, invoice-range match, term membership.</li>
+  <li><strong>Grace/target-date calculation</strong> — Plan-code lookups + non-blackout adjustment via <code>BillingSchedule.getNonBlackoutDateRq</code>.</li>
+  <li><strong>Notice/action selection</strong> — <code>Activity_Generate.ActivityTypeCode</code> ∈ {PCN, RPCN, NOL, NOCF, LTCH, RMDR, COL, ICOL, ECN}.</li>
+  <li><strong>Suppression validation</strong> — Tolerance amt/pct (PCN); balance start/stop (COL); AOI filter (NOC/NOL/NOW); payment-since-last (PCN); SuppressedInvoice; TRFT transfer.</li>
+  <li><strong>Template selection</strong> — <code>Carrier_Forms_Letters_Manuscript</code> picks <code>.doc</code> subdoc by <code>IsSafepoint/IsCajun/IsManatee</code> AND LOB-specific NOC form-number switch.</li>
+  <li><strong>ScheduledActivity persistence</strong> — Status <code>P</code> via <code>ScheduledActivity.addOrUpdateScheduledActivityRq</code>.</li>
+  <li><strong>Billing Monitor polls</strong> — <code>BillingMonitoring.directBillMonitoringRq</code> / <code>agencyBillMonitoringRq</code> → <code>BillingFollowUpObj.executeFollowUpActivityRq</code>.</li>
+  <li><strong>Notice generation</strong> — <code>ManuScript.printFormsRq</code> / <code>Billing.printFormsRq</code> renders PDF to company-specific queue folder (SPIQUEUE_A/E/I/J or LexisNexis_).</li>
+  <li><strong>Delivery/integration</strong> — File drop; <code>OnlineData.addAttachmentRq</code>; (NOC/NOL) <code>Send.httpRq</code> POST to <code>Integration_AgencyMail.URL</code>.</li>
+  <li><strong>Status update</strong> — <code>ScheduledActivity.updateRq</code> → C/X/F.</li>
+  <li><strong>Follow-up action</strong> — Cancellation (<code>TransACT.startTransactionRq code="Cancel"</code>) / late-charge (unreachable) / collections start-or-step (<code>BillingCollections.addRq</code>, <code>Task.addRq</code>).</li>
+</ol>
+
+<h3>ASCII lifecycle flowchart</h3>
+
+<pre class="ascii-diagram">                    ┌─────────────────────────────────────────────────────────────┐
+                    │  Trigger: Invoice / Payment / Credit / Debit / Due-Date /   │
+                    │           Manual (Start / ManualStart / Letter1..3 / Task1) │
+                    └──────────────────────────────┬──────────────────────────────┘
+                                                   ▼
+                    ┌─────────────────────────────────────────────────────────────┐
+                    │ FollowUp Manager: ProcessorsConfiguration dispatch          │
+                    │ (Carrier_Billing_Events_FollowUp_Manager_1_0_0_0)           │
+                    └──────────────────────────────┬──────────────────────────────┘
+                                                   ▼
+                             ┌─────────────────────┴──────────────────────┐
+                             │ Processor.IsEnabled?                       │
+                             │ (SuppressedInvoice → suppress all except   │
+                             │  COL; TRFT PolicyTransfer → suppress COL)  │
+                             └─────────────────────┬──────────────────────┘
+                                                   │ yes
+                    ┌──────────────────────────────┴──────────────────────────────┐
+                    ▼                              ▼                              ▼
+       ┌───────────────────────┐   ┌───────────────────────┐         ┌───────────────────────┐
+       │ PCN (OrderId 1, Pol.) │   │ REIN (OrderId 2, Pol.)│         │ COL (OrderId 5, Pol.) │
+       │ EvaluatePCN /         │   │ EvaluateREIN /        │         │ EvaluateCOL /         │
+       │ ExecutePCN /          │   │ ExecuteREIN /         │         │ ExecuteCOL /          │
+       │ GeneratePCN           │   │ GenerateREIN          │         │ GenerateCOL           │
+       └───────────┬───────────┘   └───────────┬───────────┘         └───────────┬───────────┘
+                   │                            │                                  │
+       ┌───────────┴───────────┐    ┌───────────┴───────────┐         ┌────────────┴───────────┐
+       │ Custom renewal branch │    │ CheckReinAmountPaid?  │         │ CollectionPlanWorkflow │
+       │ CheckForFirstInvoice  │    │ InvoiceCount=1 &      │         │ (SFPC / COL1 / COL2)   │
+       │ → GenerateNoticeOfLap │    │ Status=CNP required   │         │ Letter1@0 / Letter2@21 │
+       │ or ExecutePCNIterator │    └───────────┬───────────┘         └────────────┬───────────┘
+       └───────────┬───────────┘                ▼                                  ▼
+                   │             ┌─────────────────────────────┐    ┌───────────────────────────┐
+                   │             │ TransACT.startTransactionRq │    │ BillingCollections.addRq  │
+                   │             │  code=Reinstate             │    │ Task.addRq (AssignedUserId│
+                   │             └─────────────────────────────┘    │  = "1" — base default)    │
+                   ▼                                                └───────────────────────────┘
+       ┌────────────────────────────────────────────────────────────┐
+       │ Forms manuscript picks .doc subdoc per Is&lt;Company&gt; AND     │
+       │ LOB switch (SIC NTC 04 07 03 16 / SIC NTC 0405 xx yy /     │
+       │ MIE NTC 04 04 10 23)                                       │
+       └──────────────────────────────┬─────────────────────────────┘
+                                      ▼
+       ┌────────────────────────────────────────────────────────────┐
+       │ ScheduledActivity (status=P) → BillingMonitor polls →      │
+       │ BillingFollowUpObj.executeFollowUpActivityRq               │
+       │ → printFormsRq → PDF → SFP/CJN/MNT QueueAttachments folder │
+       │ → OnlineData.addAttachmentRq → (NOC/NOL) AgencyMail httpRq │
+       └────────────────────────────────────────────────────────────┘
+
+              ┌───────────────────────┐         ┌───────────────────────┐
+              │ LTCH (OrderId 4, Acct)│         │ RMDR (OrderId 3, Acct)│
+              │ ALL rows dispatched   │         │ ALL rows dispatched   │
+              │ to data.SF_DisableLTCH│         │ to data.SF_DisableRMDR│
+              │ = &lt;value idref=False&gt; │         │ = &lt;value idref=False&gt; │
+              │ ── FEATURE DISABLED ──│         │ ── FEATURE DISABLED ──│
+              └───────────────────────┘         └───────────────────────┘</pre>
+
+<h2 id="s6" class="anchor">6. Process-by-Process Analysis</h2>
+
+<h3 id="s6-1" class="anchor">6.1 PCN (Policyholder Communication Notice)</h3>
+<p><strong>Purpose.</strong> Formal pre-cancellation notice starting the legal clock.
+<strong>Dispatch (carrier):</strong> OrderId 1, ProcessingLevel Policy → <code>Carrier_Billing_Events_FollowUp_PCN_Rules_1_0_0_0</code>.</p>
+
+<table class="grid">
+  <caption>Table 6.1.1 — <code>PCNPlans</code> (carrier <code>override="1"</code>)</caption>
+  <thead><tr><th>PlanCode</th><th>Description</th><th>PCNTrigDays</th><th>PolPCNRemToleranceAmt</th><th>PolPCNRemTolerancePct</th><th>UseEquity</th><th>ReschedulePCNEvaluation</th><th>PropagateToRenewal</th></tr></thead>
+  <tbody>
+    <tr><td>PCN1</td><td>Bronze</td><td>0</td><td>0.00</td><td>0.00</td><td>1</td><td>1</td><td>1</td></tr>
+    <tr><td>PCN2</td><td>Silver</td><td>1</td><td>5.00</td><td>0.03</td><td>1</td><td>1</td><td>0</td></tr>
+    <tr><td>PCN3</td><td>Gold</td><td>2</td><td>10.00</td><td>0.05</td><td>1</td><td>1</td><td>1</td></tr>
+    <tr><td>PCN4</td><td>Platinum</td><td>5</td><td>25.00</td><td>0.10</td><td>0</td><td>0</td><td>0</td></tr>
+    <tr><td>SPCN1</td><td>Platinum</td><td>5</td><td>20.00</td><td>0.00</td><td>1</td><td>1</td><td>0</td></tr>
+    <tr><td>SPCN2</td><td>Platinum</td><td>15</td><td>20.00</td><td>0.00</td><td>1</td><td>1</td><td>0</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout--info"><strong>Baseline correction.</strong> Baseline flagged two "Platinum" rows; actual is <strong>three</strong> (PCN4, SPCN1, SPCN2).</div>
+
+<table class="grid">
+  <caption>Table 6.1.2 — <code>CancelDaysNoticePlans</code> (carrier <code>override="1"</code>) — <strong>10 rows</strong>, baseline implied 1</caption>
+  <thead><tr><th>PlanCode</th><th>LegalDays</th><th>MailingDays</th><th>MaxDays</th></tr></thead>
+  <tbody>
+    <tr><td>CDN1</td><td>10</td><td>1</td><td>120</td></tr>
+    <tr><td>CDN2</td><td>20</td><td>1</td><td>365</td></tr>
+    <tr><td>CDN3</td><td>10</td><td>5</td><td>16</td></tr>
+    <tr><td>CDN4</td><td>15</td><td>1</td><td>20</td></tr>
+    <tr><td>CDN5</td><td>30</td><td>1</td><td>35</td></tr>
+    <tr><td>CDN6</td><td>10</td><td>6</td><td>20</td></tr>
+    <tr><td>CDN7</td><td>10</td><td>3</td><td>16</td></tr>
+    <tr><td>CDN8</td><td>12</td><td>1</td><td>17</td></tr>
+    <tr><td>CDN9</td><td>14</td><td>1</td><td>19</td></tr>
+    <tr><td><strong>SPCDN1</strong></td><td>10</td><td>5</td><td>365</td></tr>
+  </tbody>
+</table>
+<p class="small">Only <code>SPCDN1</code> is currently referenced by <code>SPCancelPlansAssignment</code>. Nine dormant rows (CDN1..CDN9) — Risk 17.</p>
+
+<table class="grid">
+  <caption>Table 6.1.3 — <code>RescissionPlans</code></caption>
+  <thead><tr><th>PlanCode</th><th>Description</th><th>ToleranceAmt</th><th>TolerancePct</th><th>IncludePastDue</th><th>IncludeAccountCharges</th><th>IncludeNextInstallment</th></tr></thead>
+  <tbody>
+    <tr><td>RESC1</td><td>Bronze</td><td>0.00</td><td>0.00</td><td>1</td><td>1</td><td>1</td></tr>
+    <tr><td>RESC2</td><td>Silver</td><td>5.00</td><td>0.02</td><td>1</td><td>1</td><td>1</td></tr>
+    <tr><td>RESC3</td><td>Gold</td><td>9.99</td><td>0.05</td><td>1</td><td>1</td><td>0</td></tr>
+    <tr><td>RESC4</td><td>Platinum</td><td>30.00</td><td>0.09</td><td>1</td><td>0</td><td>0</td></tr>
+    <tr><td>SPRESC1</td><td>Platinum</td><td>0.00</td><td>0.00</td><td>1</td><td>1</td><td>0</td></tr>
+  </tbody>
+</table>
+
+<table class="grid">
+  <caption>Table 6.1.4 — <code>CancelEffectiveDayPlans</code></caption>
+  <thead><tr><th>PlanCode</th><th>GreaterOfEquityOrLegalDays</th></tr></thead>
+  <tbody>
+    <tr><td>CED1</td><td>1</td></tr>
+    <tr><td>CED2</td><td>1</td></tr>
+    <tr><td>CED3</td><td>1</td></tr>
+    <tr><td>SPCED1</td><td>1</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout--warn">
+  <strong>State-uniform <code>SPCancelPlansAssignment</code>.</strong> 50 rows (AK..WY) × LOB=Default × Product=Default × Transaction=Default — every row = <code>SPCDN1,SPCED1</code>. No state, LOB, product, transaction, or company differentiation despite the schema. See Risk 13 (compliance).
+</div>
+
+<p><strong>Custom renewal branching.</strong> <code>CarrierRules_PCNExecution_WorkingFields.CheckForFirstInvoice</code> transfers control to <code>BaseRules_PCNExecution.GenerateNoticeOfLapse</code> on renewal-PCN with zero payment and <code>PolicyStatus=ACV</code> — a Billing-initiated cancellation (§6.3).</p>
+
+<p><strong>Renewal PCN activity-log-type mapping.</strong> 10 literal values in the Carrier PCN Rules manuscript: <code>SP_ACT_P3, P5, P7, P9, P12, P15, P18, P21, P24, P25</code>.</p>
+
+<h3 id="s6-2" class="anchor">6.2 Reminder Notices (RMDR) — <span class="disabled">DISABLED</span></h3>
+
+<div class="callout callout--defect">
+  <strong>CONFIRMED DISABLED.</strong> Carrier <code>ProcessorsConfiguration</code> (OrderId=3, ProcessingLevel=Account) routes all three RMDR flow rows to <code>data.SF_DisableRMDR</code> — defined once in <code>Carrier_Billing_Events_FollowUp_ReminderNotice_Rules_1_0_0_0.xml</code> as <code>&lt;value idref="False"/&gt;</code>. Also base Execute path is a <code>RaiseError_ReminderNoticeNotImplemented</code> stub — <strong>two-layer fix required to restore.</strong>
+</div>
+
+<table class="grid">
+  <caption>Table 6.2.1 — Base <code>ReminderNoticePlans</code> (baseline claimed keys RMDR1..RMDR4 — actual keys are captions)</caption>
+  <thead><tr><th>PlanCode-Caption</th><th>ReminderNoticeDays</th></tr></thead>
+  <tbody>
+    <tr><td>Bronze</td><td>-5</td></tr>
+    <tr><td>Silver</td><td>-7</td></tr>
+    <tr><td>Gold</td><td>-8</td></tr>
+    <tr><td>Platinum</td><td>-10</td></tr>
+  </tbody>
+</table>
+
+<pre>&lt;private id="Base_ExecuteActivities_WorkingData.Execute_ReminderNoticeProcessing" type="boolean"&gt;
+    &lt;value idref="True" /&gt;
+    &lt;misc&gt;
+      &lt;if&gt;
+        &lt;condition idref="RaiseError_WorkFields.RaiseError_ReminderNoticeNotImplemented" /&gt;
+        &lt;then idref="True" /&gt;
+      &lt;/if&gt;
+    &lt;/misc&gt;
+&lt;/private&gt;</pre>
+
+<h3 id="s6-3" class="anchor">6.3 Cancellation Notices (NOC / NOL / NOW)</h3>
+
+<p>Three related notice families, produced from <code>Carrier_Forms_Letters_Manuscript_1_0_0_0.xml</code>:</p>
+<ul>
+  <li><strong>NOC</strong> — Notice of Cancellation (Insured + Mortgagee) — driven from PCN activity reaching its legal/mailing-day deadline.</li>
+  <li><strong>NOL</strong> — Notice of Lapse — Safepoint-authored, direct-cancels policy from Billing.</li>
+  <li><strong>NOW</strong> — Notice of Withdrawal — sent when payment received before cancellation effective date.</li>
+</ul>
+
+<div class="callout callout--warn">
+  <strong>NOL direct-cancel path.</strong> <code>Carrier_Billing_Events_NoticeOfLapse_Rules_1_0_0_0</code> (inherits <code>Carrier_Billing_Events_FollowUp_PCN_Rules_1_0_0_0</code>). <code>Execute_CancellationProcess.Value → BaseRules_CancellationProcess.Rules → Requests.CancelPolicyTerm → Send.postRq</code> (<code>policyInterface_DCT.url/username/password</code>) wrapping <code>Session.loginRq</code> + <code>OnlineData.loadPolicyRq</code> + <code>TransACT.startTransactionRq code="Cancel" reason.code="nonPay"</code>.
+</div>
+
+<div class="callout callout--warn">
+  <strong>Equity-Cancel two-branch behaviour.</strong> <code>Carrier_Billing_Events_Cancellation_DueToEquity_1_0_0_0</code> (also inherits Carrier PCN Rules): if <code>CurrentDate ≥ EquityDate</code> AND <code>PolicyStatus=ACV</code> → immediate <code>Requests.CancelPolicyTerm</code>. If <code>CurrentDate &lt; EquityDate</code> → <code>Requests.AddScheduledActivityForECN</code> (ActivityTypeCode <code>ECN</code>, UserId <code>admin</code>). Baseline said "immediate only" — correction applied.
+</div>
+
+<div class="callout callout--info">
+  <strong>NOL scheduled-activity date.</strong> <code>NOL_WorkingFields.CalculateNewSchduledActivityDate</code> = <code>CurrentProcessingDate + 1 day</code>, then walked forward to next non-blackout day via <code>BillingSchedule.getNonBlackoutDateRq method="+"</code>. Baseline said "immediate" — corrected.
+</div>
+
+<table class="grid">
+  <caption>Table 6.3.1 — Company-conditioned templates (subdoc conditions)</caption>
+  <thead><tr><th>Notice / documentSet</th><th class="company-sfp">Safepoint</th><th class="company-cic">Cajun</th><th class="company-mie">Manatee</th></tr></thead>
+  <tbody>
+    <tr><td>NOC — Cover Page (Insured)</td><td>SIC NTC 04 07 03 16 Notice of Cancellation Cover Page Insured.doc</td><td>… _CJN.doc</td><td>MIE NTC 04 04 10 23 Notice of Cancellation Cover Page Insured_MNT.doc</td></tr>
+    <tr><td>NOC — Non-Payment body (Insured)</td><td>SIC NTC 04 07 03 16 Notice of Cancellation for Non-Payment of Premium.doc</td><td>… _CJN.doc</td><td>MIE NTC 04 04 10 23 Notice of Cancellation for Non-Payment of Premium_MNT.doc</td></tr>
+    <tr><td>NOC — Cover Page (Mortgagee)</td><td>SIC NTC 04 07 03 16 Notice of Cancellation Cover Page Mortagage.doc</td><td>… _CJN.doc</td><td>MIE NTC 04 04 10 23 Notice of Cancellation Cover Page Mortagage_MNT.doc</td></tr>
+    <tr><td>NOC — Mortgagee narrative <span class="small">(note: double-space in source)</span></td><td>SIC NTC 04 07 03 16 Notice of Cancellation&nbsp;&nbsp;Mortagage.doc</td><td>… _CJN.doc</td><td>MIE NTC 04 04 10 23 Notice of Cancellation&nbsp;&nbsp;Mortagage_MNT.doc</td></tr>
+    <tr><td>NOL — Cover Page</td><td>NOL Cover Page.doc</td><td>NOL Cover Page_CJN.doc</td><td>NOL Cover Page_MNT.doc</td></tr>
+    <tr><td>NOL — body</td><td>SIC NTC 04 04 03 16 NOTICE OF LAPSE.doc</td><td>… _CJN.doc</td><td>MIE NTC 04 04 10 23 NOTICE OF LAPSE_MNT.doc</td></tr>
+    <tr><td>NOL — Mortgagee bill copy</td><td>SIC NTC 04 04 03 16 NOTICE OF LAPSE_MortgageeBill_Copy.doc + NOL Cover Page Mortgagee.doc</td><td>… _CJN.doc</td><td>MIE NTC 04 04 10 23 NOTICE OF LAPSE_MortgageeBill_Copy_MNT.doc</td></tr>
+    <tr><td>NOL — AOI insert</td><td>SIC NTC 04 07 03 16 Notice of Lapse Cover Page Mortagage.doc + NoticeOfLapseAdditionalOtherInterestForm.doc</td><td>NoticeOfLapseAdditionalOtherInterestForm_CJN.doc</td><td>NoticeOfLapseAdditionalOtherInterestForm_MNT.doc</td></tr>
+    <tr><td>NOW (Insured — AIO)</td><td>NoticeOfWithDrawlInsuredAIO.doc</td><td>NoticeOfWithDrawlInsuredAIO_CJN.doc</td><td>NoticeOfWithDrawlInsuredAIO_MNT.doc</td></tr>
+    <tr><td>NOW (Additional Insured)</td><td>NoticeOfWithDrawlAI.doc (scoped iter over AdditionalOtherInterest)</td><td>NoticeOfWithDrawlAI_CJN.doc</td><td>NoticeOfWithDrawlAI_MNT.doc</td></tr>
+  </tbody>
+</table>
+
+<table class="grid">
+  <caption>Table 6.3.2 — LOB-specific NOC form-number switch (<code>select idref="LOB.LineOfBusinessType"</code> in Forms manuscript) — <strong>new content vs baseline</strong></caption>
+  <thead><tr><th>LOB.LineOfBusinessType</th><th>Form-number prefix used</th></tr></thead>
+  <tbody>
+    <tr><td>LASelectDwelling</td><td>SIC NTC 0405 01 16</td></tr>
+    <tr><td>LAHomeownersAdvantage</td><td>SIC NTC 0405 08 16</td></tr>
+    <tr><td>TWIAWindOnly</td><td>SIC NTC 0405 05 17</td></tr>
+    <tr><td>ALHomeownersAdvantage</td><td>SIC NTC 0405 11 19</td></tr>
+    <tr><td>LASelectHomeowners</td><td>SIC NTC 0405 01 16</td></tr>
+    <tr><td>otherwise</td><td>SIC NTC 04 07 03 16</td></tr>
+  </tbody>
+</table>
+
+<h4>AOI / mortgagee copy-distribution filter — CONFIRMED per-company variance</h4>
+
+<pre>IF PolicyTerms.Type IN {FirstMortgagee, SecondMortgagee, ThirdMortgagee, FourthMortgagee,
+                        AdditionalInsured, AdditionalInterest, Corporation, PremiumFinance,
+                        LossPayee, Trust}
+   AND IsSafepoint(NOL|NOC)
+THEN produce copy
+ELSE IF PolicyTerms.Type = "PremiumFinance"
+      AND (IsCajun(NOL|NOC) OR IsManatee(NOL|NOC))
+THEN produce copy</pre>
+
+<div class="callout callout--defect">
+  <strong>Source-code bug — Risk 14.</strong> <code>NoticeOfWithDraw_WorkingFields.IsManateeNOW</code> defined with <code>path="IsSafepointNOW"</code> (copy-paste artifact). Value computes correctly, but session write path collides with Safepoint's. Any downstream reader of session <code>IsSafepointNOW</code> after Manatee execution sees the wrong flag.
+</div>
+
+<table class="grid">
+  <caption>Table 6.3.3 — Print-queue distribution channels (orthogonal to company folder)</caption>
+  <thead><tr><th>Queue suffix</th><th>Purpose</th><th>Trigger</th></tr></thead>
+  <tbody>
+    <tr><td><code>SPIQUEUE_A_PRINT_…</code></td><td>Domestic first-class print/mail</td><td>Default insured copies</td></tr>
+    <tr><td><code>SPIQUEUE_E_PRINT_…</code></td><td>Foreign-address print/mail</td><td>AOI insured/mortgagee flagged foreign</td></tr>
+    <tr><td><code>LexisNexis_…</code></td><td>LexisNexis electronic delivery</td><td>AOI mortgagee with LexisNexis-enrolled loan number</td></tr>
+    <tr><td><code>SPIQUEUE_I</code></td><td>NOL fan-out to secondary queue</td><td><code>Requests.PrintNoticeOfLapseQueueI</code></td></tr>
+    <tr><td><code>SPIQUEUE_J</code></td><td>NOL IVANS PDF download</td><td><code>Requests.PrintNoticeOfLapseForIVANSPdfDownloads</code></td></tr>
+  </tbody>
+</table>
+
+<h3 id="s6-4" class="anchor">6.4 Late Charges (LTCH) — <span class="disabled">DISABLED</span></h3>
+
+<div class="callout callout--defect">
+  <strong>CONFIRMED DISABLED.</strong> Carrier <code>ProcessorsConfiguration</code> (OrderId=<strong>4</strong>, ProcessingLevel=<strong>Account</strong>) routes all three LTCH flow rows to <code>data.SF_DisableLTCH</code> — <code>&lt;value idref="False"/&gt;</code>. Base LTCH is fully implemented (OrderId=2, Account) but unreachable at the carrier layer.
+</div>
+
+<div class="callout callout--info">
+  <strong>Baseline correction.</strong> Baseline said carrier ProcessingLevel = Policy. Actual: <strong>Account</strong> (all three LTCH rows). Also carrier <code>Carrier_Billing_Charges_LateCharges_Rules_US_1_0_0_0.xml</code> (charge-plan overlay) is <code>&lt;model/&gt;</code> — no Safepoint rate/rule for actual charge calculation either.
+</div>
+
+<h3 id="s6-5" class="anchor">6.5 Internal Collections (COL)</h3>
+
+<p><strong>Dispatch.</strong> OrderId 5, ProcessingLevel Policy → <code>Carrier_Billing_Events_FollowUp_COL_Rules_1_0_0_0</code> (inherits <code>Billing_Events_FollowUp_COL_Rules_1_0_0_0</code>).</p>
+
+<table class="grid">
+  <caption>Table 6.5.1 — Carrier <code>SFPC</code> (letter cadence — <strong>2 rows only</strong>, baseline claimed more)</caption>
+  <thead><tr><th>Step key (rowKey)</th><th>Day offset</th><th>Manuscript ref</th><th>Action code</th></tr></thead>
+  <tbody>
+    <tr><td>Letter1</td><td>0</td><td>Billing_Events_FollowUp_COL_Rules_1_0_0_0</td><td>LTR1</td></tr>
+    <tr><td>Letter2</td><td>21</td><td>Billing_Events_FollowUp_COL_Rules_1_0_0_0</td><td>LTR2</td></tr>
+  </tbody>
+</table>
+
+<table class="grid">
+  <caption>Table 6.5.2 — Base cadence tables (<code>Billing_Events_FollowUp_COL_Rules_1_0_0_0.xml</code>)</caption>
+  <thead><tr><th>Plan</th><th>Letter1</th><th>Letter2</th><th>Letter3</th><th>Task1</th></tr></thead>
+  <tbody>
+    <tr><td>COL1</td><td>day 0, LTR1</td><td>day 14, LTR2</td><td>day 28, LTR3</td><td>day 28, TSK1</td></tr>
+    <tr><td>COL2</td><td>day 0, LTR1</td><td>day 14, LTR2</td><td>—</td><td>day 14, TSK1</td></tr>
+  </tbody>
+</table>
+
+<table class="grid">
+  <caption>Table 6.5.3 — Carrier <code>CollectionPlans</code> (<code>override="1"</code>) — balance/entry thresholds</caption>
+  <thead><tr><th>PlanCode</th><th>Description</th><th>DaysAfterCancel</th><th>DaysAfterExpiration</th><th>CollectionBalanceStart</th><th>CollectionBalanceStop</th></tr></thead>
+  <tbody>
+    <tr><td>COL1</td><td>Account.TotalCollectionsBalance</td><td>1</td><td>1</td><td>25</td><td>25</td></tr>
+    <tr><td>COL2</td><td>(empty)</td><td>2</td><td>5</td><td>25</td><td>25</td></tr>
+    <tr><td>SFPC</td><td>Internal Collections</td><td>31</td><td>1</td><td>5</td><td>99999</td></tr>
+  </tbody>
+</table>
+
+<table class="grid">
+  <caption>Table 6.5.4 — Carrier <code>CollectionPlansAssignment</code> (<code>override="1"</code>) — <strong>2 rows only, not state-keyed</strong> (baseline was wrong on this)</caption>
+  <thead><tr><th>Row key</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>SFPC</td><td>SFPC,COLPlan1</td></tr>
+    <tr><td>COL2</td><td>COL2,COLPlan2</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout--warn">
+  <strong>Baseline correction — significant.</strong> Baseline said <code>CollectionPlansAssignment</code> has State/LOB/Product/Transaction rowKeys and all 50 combinations resolve to SFPC. <strong>Actual:</strong> only <strong>one</strong> <code>rowKeys name="COLPlanCode"</code> and <strong>two data rows</strong>. No state/LOB/product/transaction dimension.
+</div>
+
+<table class="grid">
+  <caption>Table 6.5.5 — Company template subdocs (Collections letters)</caption>
+  <thead><tr><th>documentSet</th><th class="company-sfp">Safepoint</th><th class="company-cic">Cajun</th><th class="company-mie">Manatee</th></tr></thead>
+  <tbody>
+    <tr><td>InternalCollectionsLetter1</td><td>Inv_Collection Letter1_09282022.doc</td><td>Inv_Collection Letter1_CJN.doc</td><td>Inv_Collection Letter1_MNT.doc</td></tr>
+    <tr><td>InternalCollectionsLetter2</td><td>Inv_Collection Letter2_09282022.doc</td><td>Inv_Collection Letter2_CJN.doc</td><td>Inv_Collection Letter2_MNT.doc</td></tr>
+    <tr><td>InternalCollectionsLetter3</td><td colspan="3">Base only — <code>InternalCollectionsLetter3.doc</code>. <strong>No company-branded subdoc at carrier layer.</strong> Unreachable under SFPC plan (cadence stops at Letter2).</td></tr>
+  </tbody>
+</table>
+
+<table class="grid">
+  <caption>Table 6.5.6 — <code>FormsEmailData</code> (company-specific email domains) — <strong>new content vs baseline</strong></caption>
+  <thead><tr><th>ProcessingOrgUnitLevel</th><th>Subject</th><th>From</th></tr></thead>
+  <tbody>
+    <tr><td>1 (SFP)</td><td>---- [Important: New Policy Documents Ready for Review] -----</td><td class="company-sfp">noreply@safepointins.com</td></tr>
+    <tr><td>2 (CIC)</td><td>---- [Important: New Policy Documents Ready for Review] -----</td><td class="company-cic">noreply@cajunuw.com</td></tr>
+    <tr><td>3 (MIE)</td><td>---- [Important: New Policy Documents Ready for Review] -----</td><td class="company-mie">noreply@manatee-insurance.com</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout--info">
+  <strong>Hard-coded values are in BASE, not carrier.</strong> <code>Task1Parameters.AssignedUserId="1"</code>, <code>InsuranceEmployeeName="John Q Accountant"</code>, <code>InsuranceEmployeeContactInformation="888-000-0000"</code>, <code>InsuranceEmployeeTitle="Collections"</code> — all in base <code>Billing_Events_FollowUp_COL_Rules_1_0_0_0.xml</code>. Carrier overlay does not override them.
+</div>
+
+<h3 id="s6-6" class="anchor">6.6 Custom Follow-Ups</h3>
+
+<table class="grid">
+  <caption>Table 6.6.1 — <code>ReinstatePlans</code> (carrier <code>override="1"</code>)</caption>
+  <thead><tr><th>PlanCode</th><th>Description</th><th>ReinDays</th></tr></thead>
+  <tbody>
+    <tr><td>REIN1</td><td>Bronze</td><td>5</td></tr>
+    <tr><td>REIN2</td><td>Silver</td><td>6</td></tr>
+    <tr><td>REIN3</td><td>Gold</td><td>8</td></tr>
+    <tr><td>REIN4</td><td>Platinum</td><td>10</td></tr>
+    <tr><td>SPREIN1</td><td>(empty caption)</td><td>5</td></tr>
+  </tbody>
+</table>
+
+<p><strong>REIN Execute path:</strong> <code>Base_ExecuteActivities_WorkingData.Execute_FinancialRules</code> gates on <code>Account.InvoiceCount=1</code> AND <code>PolicyTermStatusCode=CNP</code>, then <code>CheckReinAmountPaid</code> → <code>data.PostREIN</code> → <code>TransACT.startTransactionRq code="Reinstate"</code>. If amount not met → <code>RaiseError_ReinstateActivityDatePassed</code>.</p>
+
+<p><strong>Equity-Cancel (already covered in 6.3):</strong> two branches — immediate cancel or scheduled ECN activity.</p>
+
+<p><strong>NOCF:</strong> <code>ActivityRules_ExecuteNOCF</code> in Carrier PCN Rules; fires follow-up PCN (<code>sendPCNRq</code> labelled "Request PCN2") with new 15-day cancel date when partial payment received after PCN/NOL. No base equivalent.</p>
+
+<p><strong>MPR:</strong> Base <code>Billing_FollowUp_Generate_MPR_1_0_0_0</code> / <code>Billing_FollowUp_Process_MPR_1_0_0_0</code> are implemented; all carrier MPR overlays are <code>&lt;model/&gt;</code>. Actual invocation gated by <code>PolicyTermConfig/MPR/@MPR='1'</code> — <strong>Not Verified from Manuscripts alone</strong>.</p>
+
+<h2 id="s7" class="anchor">7. Company-Level Comparison</h2>
+
+<h3><span class="company-sfp">7.A Safepoint (ProcessingOrgUnitCode 9999 / PolicyTerm 1, masterID SIC)</span></h3>
+<ul>
+  <li><strong>Active:</strong> PCN, RPCN, REIN, COL, NOC/NOL/NOW, Equity-Cancellation, NOCF.</li>
+  <li><strong>Disabled:</strong> LTCH, RMDR (dispatch stub, all-companies).</li>
+  <li><strong>Dormant:</strong> MPR (empty carrier shell).</li>
+  <li><strong>AOI distribution:</strong> All 10 interest types (FirstMortgagee, SecondMortgagee, ThirdMortgagee, FourthMortgagee, AdditionalInsured, AdditionalInterest, Corporation, PremiumFinance, LossPayee, Trust).</li>
+  <li><strong>Templates:</strong> unsuffixed or <code>SIC NTC 04 07 03 16 …</code> prefix; state-specific <code>SIC NTC 0405 xx yy</code> for LA/TX/AL LOBs.</li>
+  <li><strong>Print queue:</strong> <code>Billing.SFPQueueAttachments</code>.</li>
+  <li><strong>Email from:</strong> <code>noreply@safepointins.com</code>.</li>
+  <li><strong>Custom logic:</strong> originates NOL / Equity-Cancel / NOCF.</li>
+</ul>
+
+<h3><span class="company-cic">7.B Cajun (ProcessingOrgUnitCode 8888 / PolicyTerm 2, masterID CIC)</span></h3>
+<ul>
+  <li><strong>Active:</strong> identical set to Safepoint.</li>
+  <li><strong>Plan tables:</strong> consumes shared Safepoint tables — no Cajun-specific plan codes found anywhere.</li>
+  <li><strong>AOI distribution:</strong> <code>PremiumFinance</code> only (narrower than Safepoint).</li>
+  <li><strong>Templates:</strong> <code>_CJN.doc</code> suffix on Safepoint-family templates.</li>
+  <li><strong>Print queue:</strong> <code>Billing.CJNQueueAttachments</code>.</li>
+  <li><strong>Email from:</strong> <code>noreply@cajunuw.com</code>.</li>
+</ul>
+
+<h3><span class="company-mie">7.C Manatee (ProcessingOrgUnitCode 7777 / PolicyTerm 3, masterID MIE)</span></h3>
+<ul>
+  <li><strong>Active:</strong> identical set.</li>
+  <li><strong>Plan tables:</strong> consumes shared Safepoint tables.</li>
+  <li><strong>AOI distribution:</strong> <code>PremiumFinance</code> only (grouped with Cajun via <code>OR</code>).</li>
+  <li><strong>Templates:</strong> independently authored <code>MIE NTC 04 04 10 23 …</code> prefix + <code>_MNT.doc</code> suffix.</li>
+  <li><strong>Print queue:</strong> <code>Billing.MNTQueueAttachments</code>.</li>
+  <li><strong>Email from:</strong> <code>noreply@manatee-insurance.com</code>.</li>
+  <li><strong>Bug:</strong> <code>NoticeOfWithDraw_WorkingFields.IsManateeNOW</code> with <code>path="IsSafepointNOW"</code> — see Risk 14.</li>
+</ul>
+
+<h2 id="s8" class="anchor">8. Notice Trigger Matrix</h2>
+
+<table class="grid">
+  <caption>Table 8.1 — Notice Trigger Matrix (compact view; full detail in linked sections)</caption>
+  <thead><tr><th>Process</th><th>Notice / Action</th><th>Trigger event</th><th>Company variance</th><th>Timing rule</th><th>Suppression</th><th>Integration</th></tr></thead>
+  <tbody>
+    <tr><td>PCN</td><td>PCN Notice</td><td>Invoice generated, past-due balance</td><td>None (business); templates by company</td><td><code>PCNPlans.PCNTrigDays</code> (0-15 d) added to due date</td><td>Tolerance amt/pct; Payment-since-last</td><td><code>BillPolicyInterface.sendPCNRq</code></td></tr>
+    <tr><td>Cancellation</td><td>NOC (Insured/Mortgagee)</td><td>PCN legal/mailing day elapses</td><td class="company-sfp">SFP=10 types</td><td>SPCDN1 = 10 legal + 5 mailing, max 365</td><td>PolicyStatus=ACV</td><td>AgencyMail httpRq</td></tr>
+    <tr><td>Cancellation</td><td>NOL (direct-cancel)</td><td>Renewal PCN, payment-since-PCN=0, ACV</td><td>Templates by company</td><td>Scheduled: CurrentDate + 1 (next non-blackout)</td><td>Payment-since-last</td><td>TransACT Cancel via Send.postRq</td></tr>
+    <tr><td>Cancellation</td><td>NOW (Withdrawal)</td><td>Payment received, cancel withdrawn</td><td>AOI breadth as NOC/NOL</td><td>On event</td><td>Interest-type filter</td><td>OnlineData.addAttachmentRq</td></tr>
+    <tr><td class="disabled">Late Charge</td><td>LTCH</td><td>Due date + X days no payment</td><td>None — all disabled</td><td>Unreachable</td><td>N/A</td><td>N/A</td></tr>
+    <tr><td class="disabled">Reminder</td><td>RMDR</td><td>Due date − X days</td><td>None — all disabled</td><td>Unreachable</td><td>N/A</td><td>N/A</td></tr>
+    <tr><td>Collections</td><td>COL entry</td><td>Balance &gt; start, term CN/CNP/expired</td><td>Templates + email domain by company</td><td>Balance + DaysAfterCancel/Expiration (SFPC)</td><td>Balance ≤ Stop; duplicate guard</td><td>BillingCollections.addRq, Task.addRq</td></tr>
+    <tr><td>Collections</td><td>Letter1/2 step</td><td>Day offset in SFPC cadence</td><td>Templates by company</td><td>Day 0 / 21 (SFPC)</td><td>Action-code already applied</td><td>Billing.printFormsRq</td></tr>
+    <tr><td>Reinstate</td><td>REIN</td><td>Full payment received on CNP term</td><td>None</td><td>ReinstatePlans 5-10 d</td><td>InvoiceCount=1; amount fully paid</td><td>TransACT Reinstate</td></tr>
+    <tr><td>Custom</td><td>Equity Cancel</td><td>Equity date reached OR ECN activity due</td><td>None</td><td>Two branches</td><td>ACV + CurrentDate &lt; PolicyExpirationDate</td><td>TransACT Cancel</td></tr>
+    <tr><td>Custom</td><td>NOCF</td><td>Partial payment after PCN/NOL</td><td>None</td><td>Immediate + 15-day new cancel date</td><td>Payment &gt; 0 since PCN</td><td>sendPCNRq "PCN2"</td></tr>
+    <tr><td>Custom</td><td>MPR</td><td>PolicyTermConfig/MPR/@MPR='1'</td><td><strong>Not Verified</strong></td><td>Base logic</td><td>N/A</td><td>N/A</td></tr>
+  </tbody>
+</table>
+
+<h2 id="s9" class="anchor">9. Batch Process Inventory</h2>
+
+<div class="callout callout--gap">
+  <strong>No named batch jobs for follow-up notice types.</strong> Only two generic mechanisms exist.
+</div>
+
+<table class="grid">
+  <caption>Table 9.1 — Batch / service inventory</caption>
+  <thead><tr><th>Batch / service</th><th>Purpose</th><th>Trigger / schedule</th><th>Code/config reference</th></tr></thead>
+  <tbody>
+    <tr><td>Async retry harness (<code>BatchScript_RetryRequests</code>)</td><td>Retry failed async requests</td><td>Semaphore-based; queries <code>CustomServer.listSemaphoresRq</code></td><td><code>Billing/BatchScripts/BatchRetryRequest.xml</code></td></tr>
+    <tr><td>Billing Monitor service (<code>DuckCreek.BillingMonitoring.dll</code>)</td><td>Polls ScheduledActivity P and invokes <code>BillingFollowUpObj.executeFollowUpActivityRq</code></td><td>Windows service; frequency <strong>NOT in manuscripts</strong></td><td>Verbs registered in <code>Billing/Shared/BillingRequestMap.xml</code></td></tr>
+  </tbody>
+</table>
+
+<p class="small">No <code>BillingMonitor.exe.config</code> file is present in the reviewed workspace paths — baseline's reference to that file was Not Found in Codebase.</p>
+
+<h2 id="s10" class="anchor">10. Configuration References</h2>
+
+<table class="grid">
+  <caption>Table 10.1 — Configuration artifacts by area</caption>
+  <thead><tr><th>Area</th><th>Artifact</th><th>File</th><th>Common / Company-specific</th><th>Value(s)</th></tr></thead>
+  <tbody>
+    <tr><td>Dispatch</td><td>ProcessorsConfiguration</td><td>Carrier Manager (<code>override="1"</code>)</td><td>Common</td><td>15 rows; LTCH×3 (4/Account → SF_Disable), RMDR×3 (3/Account → SF_Disable), PCN×3 (1/Policy), REIN×3 (2/Policy), COL×3 (5/Policy)</td></tr>
+    <tr><td>PCN</td><td>PCNPlans</td><td>Carrier PCN Rules</td><td>Common</td><td>6 rows (see 6.1.1)</td></tr>
+    <tr><td>PCN</td><td>CancelDaysNoticePlans</td><td>Carrier PCN Rules</td><td>Common</td><td>10 rows (see 6.1.2) — only SPCDN1 in use</td></tr>
+    <tr><td>PCN</td><td>SPCancelPlansAssignment</td><td>Carrier PCN Rules</td><td>Common</td><td>50 rows × Default LOB/Product/Transaction = <code>SPCDN1,SPCED1</code></td></tr>
+    <tr><td>PCN</td><td>RescissionPlans</td><td>Carrier PCN Rules</td><td>Common</td><td>5 rows</td></tr>
+    <tr><td>PCN</td><td>CancelEffectiveDayPlans</td><td>Carrier PCN Rules</td><td>Common</td><td>4 rows, all =1</td></tr>
+    <tr><td>PCN log</td><td>SP_ACT_P* activity codes</td><td>Carrier PCN Rules</td><td>Common</td><td>10 codes: P3, P5, P7, P9, P12, P15, P18, P21, P24, P25</td></tr>
+    <tr><td>Reinstate</td><td>ReinstatePlans</td><td>Carrier Reinstate Rules (<code>override="1"</code>)</td><td>Common</td><td>5 rows (see 6.6.1)</td></tr>
+    <tr><td>Collections</td><td>SFPC (cadence)</td><td>Carrier COL Rules</td><td>Common</td><td>2 rows only</td></tr>
+    <tr><td>Collections</td><td>CollectionPlans</td><td>Carrier COL Rules (<code>override="1"</code>)</td><td>Common</td><td>3 rows</td></tr>
+    <tr><td>Collections</td><td>CollectionPlansAssignment</td><td>Carrier COL Rules (<code>override="1"</code>)</td><td>Common</td><td>2 rows — <strong>not state-keyed</strong></td></tr>
+    <tr><td>Collections</td><td>FormsEmailData</td><td>Carrier COL Rules</td><td><strong>Company-specific</strong></td><td>6 rows: safepointins.com (1), cajunuw.com (2), manatee-insurance.com (3)</td></tr>
+    <tr><td class="disabled">Late Charge</td><td>data.SF_DisableLTCH</td><td>Carrier LateCharge Rules</td><td>Common</td><td>Single field, <code>&lt;value idref="False"/&gt;</code></td></tr>
+    <tr><td class="disabled">Late Charge rate</td><td>(empty)</td><td>Carrier Charges LateCharges</td><td>Common</td><td><code>&lt;model/&gt;</code></td></tr>
+    <tr><td class="disabled">Reminder</td><td>data.SF_DisableRMDR</td><td>Carrier ReminderNotice Rules</td><td>Common</td><td>Single field, <code>&lt;value idref="False"/&gt;</code></td></tr>
+    <tr><td>Discriminator</td><td>ProcessingOrgUnitCode paired</td><td>Forms manuscript (AND); COL Rules (PolicyTerm-only)</td><td>Company-specific</td><td>SFP=9999/1, CIC=8888/2, MIE=7777/3</td></tr>
+    <tr><td>Print queue folder</td><td>SFPQueueAttachments / CJN / MNT</td><td>Web-config via <code>Settings.getPropertyRq</code></td><td>Company-specific</td><td>Three distinct keys</td></tr>
+    <tr><td>AgencyMail</td><td>Integration_AgencyMail.URL / ApiKey</td><td>Web-config</td><td>Common</td><td>Single endpoint</td></tr>
+    <tr><td>Policy attachment</td><td>policyInterface_DCT.url / username / password</td><td>Web-config</td><td>Common</td><td>Shared credentials for OnlineData.addAttachmentRq and cross-tier Send.postRq</td></tr>
+  </tbody>
+</table>
+
+<h2 id="s11" class="anchor">11. Technical Components</h2>
+
+<table class="grid">
+  <caption>Table 11.1 — Manuscripts, verbs, assemblies, stored procedures</caption>
+  <thead><tr><th>Type</th><th>Component</th><th>Role</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Manuscript</td><td><code>Carrier_Billing_Events_FollowUp_Manager_1_0_0_0</code></td><td>Dispatch orchestrator (carrier)</td><td>Contains the LTCH/RMDR disable-stub routing</td></tr>
+    <tr><td>Manuscript</td><td><code>Billing_Events_FollowUp_Manager_1_0_0_0</code></td><td>Base dispatch</td><td>inherits Carrier_Billing_Events_FollowUp_Data_1_0_0_0 (unusual)</td></tr>
+    <tr><td>Manuscript</td><td><code>Carrier_Billing_Events_FollowUp_PCN_Rules_1_0_0_0</code></td><td>PCN + custom renewal branch</td><td>Contains CheckForFirstInvoice</td></tr>
+    <tr><td>Manuscript (custom)</td><td><code>Carrier_Billing_Events_NoticeOfLapse_Rules_1_0_0_0</code></td><td>Direct policy Cancel via TransACT</td><td>Inherits Carrier PCN Rules</td></tr>
+    <tr><td>Manuscript (custom)</td><td><code>Carrier_Billing_Events_Cancellation_DueToEquity_1_0_0_0</code></td><td>Equity-date Cancel / ECN schedule</td><td>Inherits Carrier PCN Rules</td></tr>
+    <tr><td>Manuscript (stub)</td><td><code>Carrier_Billing_Events_FollowUp_LateCharge_Rules_1_0_0_0</code></td><td>LTCH disable</td><td>Body = <code>data.SF_DisableLTCH</code></td></tr>
+    <tr><td>Manuscript (stub)</td><td><code>Carrier_Billing_Events_FollowUp_ReminderNotice_Rules_1_0_0_0</code></td><td>RMDR disable</td><td>Body = <code>data.SF_DisableRMDR</code></td></tr>
+    <tr><td>Manuscript</td><td><code>Carrier_Billing_Events_FollowUp_COL_Rules_1_0_0_0</code></td><td>Full COL lifecycle + email domains + Is&lt;Company&gt;</td><td>Largest carrier customization</td></tr>
+    <tr><td>Manuscript</td><td><code>Carrier_Forms_Letters_Manuscript_1_0_0_0</code></td><td>All notice templates + company discriminator + AOI filter</td><td>Central presentation-layer manuscript</td></tr>
+    <tr><td>Manuscript (empty)</td><td><code>Carrier_Billing_Workflow</code></td><td>Workflow engine</td><td><code>&lt;model/&gt;</code></td></tr>
+    <tr><td>Manuscript (empty)</td><td><code>Carrier_Billing_Charges_LateCharges_Rules_US_1_0_0_0</code></td><td>Late-charge rate rules</td><td><code>&lt;model/&gt;</code></td></tr>
+    <tr><td>Manuscript (empty)</td><td><code>Carrier_Billing_FollowUp_Generate_MPR_1_0_0_0</code> + siblings</td><td>MPR</td><td>All <code>&lt;model/&gt;</code></td></tr>
+    <tr><td>Batch script</td><td><code>BatchScript_RetryRequests</code></td><td>Async retry</td><td><code>Billing/BatchScripts/BatchRetryRequest.xml</code></td></tr>
+    <tr><td>.NET assembly</td><td><code>DuckCreek.BillingFollowUpObj.dll</code></td><td>FollowUpRequests, FollowUpManager types</td><td>Registered in BillingRequestMap.xml</td></tr>
+    <tr><td>.NET assembly</td><td><code>DuckCreek.BillingMonitoring.dll</code></td><td>Billing Monitor service</td><td>Same registry</td></tr>
+    <tr><td>Verb</td><td><code>TransACT.startTransactionRq</code></td><td>Cross-tier Policy transaction</td><td>NOL, Equity-Cancel, REIN</td></tr>
+    <tr><td>Verb</td><td><code>Send.postRq</code></td><td>Outbound HTTP POST</td><td>NOL, Equity-Cancel with policyInterface_DCT.url</td></tr>
+    <tr><td>Verb</td><td><code>Send.httpRq</code></td><td>Outbound HTTP (JSON)</td><td>AgencyMail</td></tr>
+    <tr><td>Verb</td><td><code>BillingCollections.addRq/searchRq/updateRq/deleteRq</code></td><td>Collections CRUD</td><td>COL Rules</td></tr>
+    <tr><td>Verb</td><td><code>Task.addRq</code></td><td>Internal task queue</td><td>Base COL Task1</td></tr>
+    <tr><td>Verb</td><td><code>BillingSchedule.getNonBlackoutDateRq</code></td><td>Business-day walk</td><td>method="+" / "-"</td></tr>
+    <tr><td>Stored proc</td><td><code>Carrier_SP_BIL_GetFirstInvoiceDateForRenew</code></td><td>First-invoice-date for renewal PCN</td><td>Carrier PCN Rules</td></tr>
+    <tr><td>Stored proc</td><td><code>Carrier_SP_BIL_GetPaymentAllocationForAccount / ForCharge</code></td><td>Payment allocation for PCN suppression</td><td>Carrier PCN Rules</td></tr>
+    <tr><td>Stored proc</td><td><code>Carrier_SP_BIL_GetChargeDetailsForCollection</code></td><td>Charge detail for collections</td><td>COL Rules</td></tr>
+    <tr><td>Stored proc</td><td><code>Carrier_SP_BIL_GetQuoteId</code></td><td>Policy quote ID</td><td>Cross-manuscript</td></tr>
+  </tbody>
+</table>
+
+<h2 id="s12" class="anchor">12. Company Variance Summary</h2>
+
+<table class="grid">
+  <caption>Table 12.1 — Company variance by area</caption>
+  <thead><tr><th>Area</th><th class="company-sfp">Safepoint</th><th class="company-cic">Cajun</th><th class="company-mie">Manatee</th><th>Confirmed difference?</th></tr></thead>
+  <tbody>
+    <tr><td>PCN trigger days / tolerance</td><td>PCNPlans shared</td><td>Same</td><td>Same</td><td>No — Common</td></tr>
+    <tr><td>Cancellation legal/mailing days</td><td>SPCDN1 = 10/5/365</td><td>Same</td><td>Same</td><td>No — Common</td></tr>
+    <tr><td>Cancellation state assignment</td><td>50 rows uniform</td><td>Same</td><td>Same</td><td>No — Common</td></tr>
+    <tr><td>Reinstatement window</td><td>ReinstatePlans shared</td><td>Same</td><td>Same</td><td>No — Common</td></tr>
+    <tr><td class="disabled">Late Charge availability</td><td>Disabled</td><td>Disabled</td><td>Disabled</td><td>No — All disabled uniformly</td></tr>
+    <tr><td class="disabled">Reminder Notice availability</td><td>Disabled</td><td>Disabled</td><td>Disabled</td><td>No — All disabled uniformly</td></tr>
+    <tr><td>Collections thresholds / cadence</td><td>SFPC / CollectionPlans shared</td><td>Same</td><td>Same</td><td>No — Common</td></tr>
+    <tr><td>Task1 AssignedUserId</td><td>"1" (base default)</td><td>Same</td><td>Same</td><td>No — inherited base</td></tr>
+    <tr><td><strong>AOI copy distribution</strong></td><td>10 interest types</td><td>PremiumFinance only</td><td>PremiumFinance only</td><td><strong>YES — genuine business variance</strong></td></tr>
+    <tr><td>NOC LOB-specific form-number</td><td>SIC NTC 0405 xx yy per LOB</td><td>Same</td><td>Same</td><td>Common mechanism</td></tr>
+    <tr><td><strong>Notice template files</strong></td><td>unsuffixed / SIC NTC 04 07 03 16</td><td>_CJN.doc suffix</td><td>independent MIE NTC 04 04 10 23 + _MNT.doc</td><td><strong>YES — presentation variance</strong></td></tr>
+    <tr><td><strong>Print queue folder</strong></td><td>SFPQueueAttachments</td><td>CJNQueueAttachments</td><td>MNTQueueAttachments</td><td><strong>YES — routing variance</strong></td></tr>
+    <tr><td><strong>Email from-address</strong></td><td>noreply@safepointins.com</td><td>noreply@cajunuw.com</td><td>noreply@manatee-insurance.com</td><td><strong>YES — integration variance (new)</strong></td></tr>
+    <tr><td>Custom logic (NOL/Equity-Cancel/NOCF)</td><td>Originates</td><td>Inherits verbatim</td><td>Inherits verbatim</td><td>No — shared</td></tr>
+    <tr><td>MPR (Monthly Payroll Reporting)</td><td>Dormant carrier shell</td><td>Dormant</td><td>Dormant</td><td>Uniform, actual use <strong>Not Verified</strong></td></tr>
+    <tr><td>Discriminator pattern</td><td>Account AND PolicyTerm (Forms) / PolicyTerm only (COL Rules)</td><td>Same</td><td>Same</td><td>Latent risk (Risk 6)</td></tr>
+  </tbody>
+</table>
+
+<h2 id="s13" class="anchor">13. Suppression Rules Summary</h2>
+
+<table class="grid">
+  <caption>Table 13.1 — Suppression rules</caption>
+  <thead><tr><th>Rule</th><th>Condition</th><th>Applies to</th><th>Layer</th><th>Business impact</th></tr></thead>
+  <tbody>
+    <tr><td>PCN Tolerance Amount</td><td>Balance ≤ PolPCNRemToleranceAmt</td><td>PCN</td><td>Base</td><td>Skip PCN for immaterial balances</td></tr>
+    <tr><td>PCN Tolerance Percent</td><td>Balance ≤ PolPCNRemTolerancePct × premium</td><td>PCN</td><td>Base</td><td>Percentage tolerance</td></tr>
+    <tr><td>PCN Payment-Since-Last</td><td>Payment allocation &gt; 0 since last PCN</td><td>PCN</td><td>Carrier</td><td>Avoids redundant PCN or redirects to NOL</td></tr>
+    <tr><td>Suppressed-Invoice Gate</td><td>CalledFrom = "SuppressedInvoice"</td><td>PCN, RMDR, LTCH, REIN (NOT COL)</td><td>Carrier Manager</td><td>Blocks most processors on suppressed invoice</td></tr>
+    <tr><td>Policy-Transfer COL Suppression</td><td>CallingProcess = "TRFT"</td><td>COL only</td><td>Carrier Manager</td><td>Prevents COL during transfer</td></tr>
+    <tr><td>Collections Stop Threshold</td><td>Balance ≤ CollectionBalanceStop</td><td>COL</td><td>Base rules</td><td>Auto-exit collections</td></tr>
+    <tr><td>Collections Duplicate-Record Guard</td><td>InternalCollectionsRecordExists = True AND CalledFrom = Invoice</td><td>COL Generate</td><td>Carrier COL</td><td>Prevent duplicate creation</td></tr>
+    <tr><td><strong>AOI Interest-Type Filter</strong></td><td>SFP=10 types; CIC/MIE=PremiumFinance</td><td>NOC, NOL, NOW AOI copies</td><td>Carrier Forms</td><td>Company-specific</td></tr>
+    <tr><td>Reinstatement Amount Check</td><td>Invoice total &gt; payments since REIN</td><td>REIN</td><td>Base</td><td>Block premature reinstate</td></tr>
+    <tr><td class="disabled">RMDR — no reachable suppression</td><td>N/A (dispatched to stub)</td><td>RMDR</td><td>Carrier dispatch</td><td>Feature disabled upstream</td></tr>
+    <tr><td class="disabled">LTCH — no reachable suppression</td><td>N/A (dispatched to stub)</td><td>LTCH</td><td>Carrier dispatch</td><td>Feature disabled upstream</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout--gap">
+  <strong>Not Found in Codebase.</strong> Manual do-not-send indicator, invalid-address suppression, and communication-preference (email vs paper opt-out) suppression are absent from the Billing Follow-Up scope reviewed. Likely live in the Party / Communication-Preference subsystem — outside scope.
+</div>
+
+<h2 id="s14" class="anchor">14. Integration Dependency Map</h2>
+
+<table class="grid">
+  <caption>Table 14.1 — Integration dependencies</caption>
+  <thead><tr><th>Integration</th><th>Direction</th><th>Triggered by</th><th>Verb / mechanism</th><th>onFailure handling</th></tr></thead>
+  <tbody>
+    <tr><td>Policy TransACT — Cancel</td><td>Outbound</td><td>NOL, Equity-Cancel, NOCF</td><td><code>TransACT.startTransactionRq code="Cancel"</code> wrapped in <code>Send.postRq</code></td><td>Only outer Send.postRq has <code>onFailure idref="ProcessingExceptions_WorkFields.AddErrorToLog"</code>; inner TransACT node = none</td></tr>
+    <tr><td>Policy TransACT — Reinstate</td><td>Outbound</td><td>REIN Execute</td><td><code>TransACT.startTransactionRq code="Reinstate"</code></td><td>Same category</td></tr>
+    <tr><td>Policy PCN Notification</td><td>Outbound</td><td>PCN, RPCN, NOCF</td><td><code>BillPolicyInterface.sendPCNRq</code> / <code>sendMultiplePCNRq</code></td><td><code>RaiseError_WorkFields.RaiseCustomServer_CustomServer_sendMultiplePCNRqError</code> (ErrorCode 7) — explicit</td></tr>
+    <tr><td>Policy Attachment Store</td><td>Outbound</td><td>PCN, NOC, NOL, NOW</td><td><code>OnlineData.addAttachmentRq</code></td><td>Not confirmed (empty onFailure)</td></tr>
+    <tr><td>Agency Mail</td><td>Outbound</td><td>NOC, NOL</td><td><code>Send.httpRq POST</code>, <code>Integration_AgencyMail.URL/ApiKey</code></td><td>Not confirmed</td></tr>
+    <tr><td>Print/Mail Vendor</td><td>Outbound</td><td>All letter generation</td><td>File-drop to queue folder</td><td>N/A (file I/O)</td></tr>
+    <tr><td>DCT Forms Engine</td><td>Internal</td><td>All notice generation</td><td><code>ManuScript.printFormsRq</code> / <code>Billing.printFormsRq</code></td><td>Verb-level (platform)</td></tr>
+    <tr><td>Internal Task Queue</td><td>Outbound (internal)</td><td>COL Task1</td><td><code>Task.addRq</code></td><td>Not confirmed</td></tr>
+    <tr><td>Async Retry</td><td>Internal</td><td>Failed async requests</td><td><code>CustomServer.listSemaphoresRq</code> → resubmission</td><td>Semaphore-based</td></tr>
+    <tr><td>Billing Monitor Service</td><td>Internal (platform)</td><td>ScheduledActivity poll</td><td><code>BillingFollowUpObj.executeFollowUpActivityRq</code></td><td>Windows-service config (out of scope)</td></tr>
+    <tr><td>Email delivery from FormsEmailData</td><td>Outbound</td><td>Collections email</td><td><strong>Not Verified</strong> which verb consumes it</td><td>Not confirmed</td></tr>
+  </tbody>
+</table>
+
+<h2 id="s15" class="anchor">15. Risks and Improvement Opportunities</h2>
+
+<table class="grid">
+  <caption>Table 15.1 — Risks &amp; improvements (18 items)</caption>
+  <thead><tr><th>#</th><th>Risk</th><th>Priority</th><th>Evidence</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>LTCH dispatch routed to no-op stub for all 3 companies</td><td class="disabled">High</td><td>Carrier Manager dispatch → <code>data.SF_DisableLTCH = False</code></td></tr>
+    <tr><td>2</td><td>RMDR dispatch routed to no-op stub; base Execute also stubbed with RaiseError_ReminderNoticeNotImplemented</td><td class="disabled">High</td><td>Same manager table; base Execute stub</td></tr>
+    <tr><td>3</td><td>No named batch jobs for any follow-up type</td><td>Medium</td><td>Absence in BatchScripts/; BillingMonitoring is platform</td></tr>
+    <tr><td>4</td><td>Billing-initiated Policy cancel/reinstate lacks explicit onFailure at TransACT node</td><td class="disabled">High</td><td>Requests.CancelPolicyTerm (NOL, Equity-Cancel); data.PostREIN</td></tr>
+    <tr><td>5</td><td>Letter3 has no company-branded subdoc at carrier layer; also unreachable under SFPC plan</td><td>Medium</td><td>Carrier COL manuscript vs base</td></tr>
+    <tr><td>6</td><td>Company discriminator inconsistent — Forms uses AND, COL Rules uses PolicyTerm only</td><td>Low-Medium</td><td>Activity_GenerateDefaults.IsSafepoint vs FormTableDataPrivate.IsSafepoint</td></tr>
+    <tr><td>7</td><td>SFPC name collision — <code>&lt;table id&gt;</code> and row key in same manuscript</td><td>Low</td><td>Carrier COL Rules</td></tr>
+    <tr><td>8</td><td>Three "Platinum" rows in PCNPlans (PCN4, SPCN1, SPCN2); similar in RescissionPlans</td><td>Low</td><td>Carrier PCN Rules</td></tr>
+    <tr><td>9</td><td>Hard-coded Task1 AssignedUserId="1", John Q Accountant, 888-000-0000 in base COL — no per-company override</td><td>Medium</td><td>Base Billing_Events_FollowUp_COL_Rules</td></tr>
+    <tr><td>10</td><td>No do-not-send / invalid-address / comm-pref suppression in Billing Follow-Up</td><td>Medium (unverified cross-subsystem)</td><td>Absence in reviewed scope</td></tr>
+    <tr><td>11</td><td>MPR carrier shells empty; actual usage unverified</td><td>Low</td><td>Empty carrier MPR manuscripts</td></tr>
+    <tr><td>12</td><td>AOI copy narrower for CIC/MIE — no code-level rationale</td><td>Medium</td><td>ConditionForAOI_NOL, NOCCheckMortgagee</td></tr>
+    <tr><td>13</td><td>State-uniform SPCancelPlansAssignment despite schema — compliance risk if any state mandates different notice period</td><td class="disabled">High — Compliance</td><td>SPCancelPlansAssignment</td></tr>
+    <tr><td>14</td><td><strong>Source-code bug</strong>: IsManateeNOW <code>path="IsSafepointNOW"</code></td><td>Medium</td><td>Carrier_Forms_Letters_Manuscript</td></tr>
+    <tr><td>15</td><td>Cancellation_DueToEquity duplicates PCNPlans / CancelDaysNoticePlans / SPCancelPlansAssignment locally (identical data)</td><td>Low-Medium</td><td>Carrier_Billing_Events_Cancellation_DueToEquity</td></tr>
+    <tr><td>16</td><td>NOL manuscript also duplicates the same tables locally (identical data)</td><td>Low-Medium</td><td>Carrier_Billing_Events_NoticeOfLapse_Rules</td></tr>
+    <tr><td>17</td><td>10 dormant CDN1..CDN9 rows in CancelDaysNoticePlans — never referenced</td><td>Low</td><td>CancelDaysNoticePlans table</td></tr>
+    <tr><td>18</td><td>4 dormant CED1..CED3 in CancelEffectiveDayPlans; 4 dormant REIN1..REIN4 in ReinstatePlans — never referenced (only SP-prefixed rows are hit)</td><td>Low</td><td>Both plan tables</td></tr>
+  </tbody>
+</table>
+
+<h2 id="s16" class="anchor">16. Baseline → Verified Change Log</h2>
+
+<table class="grid">
+  <caption>Table 16.1 — Every substantive baseline claim re-verified (22 entries)</caption>
+  <thead><tr><th>#</th><th>Baseline claim</th><th>Verified value</th><th>Source file</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>LTCH carrier ProcessingLevel = Policy</td><td>All three LTCH rows: OrderId=4, ProcessingLevel=<strong>Account</strong>. Base LTCH: OrderId=2, Account.</td><td>Carrier + base Manager</td></tr>
+    <tr><td>2</td><td>REIN OrderId "2 or 4 depending on layer"</td><td>Carrier REIN OrderId=<strong>2</strong>, base=<strong>4</strong>. Reversed relative to LTCH between layers.</td><td>Same</td></tr>
+    <tr><td>3</td><td>Two Platinum rows in PCNPlans</td><td><strong>Three</strong> Platinum rows (PCN4, SPCN1, SPCN2). Also multiple Platinum rows in RescissionPlans.</td><td>Carrier PCN Rules</td></tr>
+    <tr><td>4</td><td>CancelDaysNoticePlans = only SPCDN1</td><td><strong>10 rows</strong> (CDN1..CDN9 + SPCDN1). Only SPCDN1 is referenced.</td><td>Carrier PCN Rules</td></tr>
+    <tr><td>5</td><td>CollectionPlansAssignment 50 combinations resolve to SFPC</td><td><strong>2 rows only</strong>, keyed on single COLPlanCode. 50-state uniformity applies to SPCancelPlansAssignment, not CollectionPlansAssignment.</td><td>Carrier COL Rules</td></tr>
+    <tr><td>6</td><td>SFPC cadence has 3 steps</td><td>Carrier SFPC has <strong>2 rows only</strong> (Letter1@0, Letter2@21). No Letter3 in SFPC. Base COL1 has 4 rows.</td><td>Same file</td></tr>
+    <tr><td>7</td><td>Task1 AssignedUserId="1" hard-coded in Safepoint</td><td>Hard-coded in <strong>BASE</strong> manuscript, not carrier.</td><td>Base file</td></tr>
+    <tr><td>8</td><td>Base RMDR uses keys RMDR1..RMDR4</td><td>Uses <strong>caption values</strong> Bronze/Silver/Gold/Platinum. Values -5/-7/-8/-10 confirmed.</td><td>Base ReminderNotice Rules</td></tr>
+    <tr><td>9</td><td>Base RMDR Execute is a stub</td><td>Confirmed — value idref True guarded by RaiseError_ReminderNoticeNotImplemented condition.</td><td>Same</td></tr>
+    <tr><td>10</td><td>Equity-Cancel fires immediately when equity date reached</td><td>Has <strong>two branches</strong>: immediate Cancel OR schedules ECN activity if equity date is future.</td><td>Cancellation_DueToEquity</td></tr>
+    <tr><td>11</td><td>NOL immediate on condition match</td><td>NOL scheduled activity = CurrentProcessingDate + 1 day, walked to next non-blackout. Baseline conflated activity date and cancellation date.</td><td>NoticeOfLapse Rules</td></tr>
+    <tr><td>12</td><td>Cancel tables only in Carrier PCN Rules</td><td>Also duplicated (override="1") in NoticeOfLapse Rules and Cancellation_DueToEquity — Risk 15 &amp; 16.</td><td>Three files</td></tr>
+    <tr><td>13</td><td>Carrier CancelEffectiveDayPlans empty</td><td>Has <strong>4 rows</strong> (CED1, CED2, CED3, SPCED1), all =1.</td><td>Carrier PCN Rules</td></tr>
+    <tr><td>14</td><td>No mention of email-domain routing</td><td>New content: FormsEmailData table (6 rows) with per-company From addresses.</td><td>Carrier COL Rules</td></tr>
+    <tr><td>15</td><td>No mention of LOB-specific NOC form-number switch</td><td>New content: <code>LOB.LineOfBusinessType</code> switch to SIC NTC 0405 xx yy prefixes.</td><td>Forms manuscript</td></tr>
+    <tr><td>16</td><td>No mention of IsManateeNOW bug</td><td>New content: <code>path="IsSafepointNOW"</code> copy-paste bug — Risk 14.</td><td>Forms manuscript</td></tr>
+    <tr><td>17</td><td>Print queue channels A/E/I/J</td><td>Confirmed. Also LexisNexis_ (electronic mortgagee). A/E/I/J are distribution channels, not company codes.</td><td>Forms manuscript</td></tr>
+    <tr><td>18</td><td>REIN plan codes 5/6/8/10/5</td><td>Confirmed: REIN1..REIN4 = 5/6/8/10, SPREIN1 = 5.</td><td>Carrier Reinstate Rules</td></tr>
+    <tr><td>19</td><td>Batch retry file name</td><td>Confirmed: ScriptName id="BatchScript_RetryRequests" (plural).</td><td>BatchRetryRequest.xml</td></tr>
+    <tr><td>20</td><td>Base FollowUp Manager inherited=""</td><td><strong>Not empty</strong> — inherits Carrier_Billing_Events_FollowUp_Data_1_0_0_0.</td><td>Base Manager</td></tr>
+    <tr><td>21</td><td>BillingMonitor.exe.config exists in workspace</td><td><strong>Not Found in Codebase</strong> at the reviewed paths. Verbs registered in BillingRequestMap.xml pointing at DuckCreek.BillingMonitoring.dll.</td><td>BillingRequestMap.xml</td></tr>
+    <tr><td>22</td><td>SP_ACT_P activity-log codes</td><td>Confirmed 10 codes: P3, P5, P7, P9, P12, P15, P18, P21, P24, P25.</td><td>Carrier PCN Rules</td></tr>
+  </tbody>
+</table>
+
+<h2 id="s17" class="anchor">17. Testing Recommendations</h2>
+
+<table class="grid">
+  <caption>Table 17.1 — Recommended test scenarios (28 total)</caption>
+  <thead><tr><th>#</th><th>Scenario</th><th>Companies</th><th>Expected result</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>PCN fires at correct target date (DueDate + PCNTrigDays, non-blackout)</td><td>All</td><td>ScheduledActivity created at expected date</td></tr>
+    <tr><td>2</td><td>PCN suppressed within tolerance amt/pct</td><td>All</td><td>No PCN activity</td></tr>
+    <tr><td>3</td><td>NOL direct-cancels on renewal PCN, zero payment, ACV</td><td>All</td><td>TransACT Cancel/nonPay fires via Send.postRq</td></tr>
+    <tr><td>4</td><td>Equity-Cancel schedules ECN when equity date is future</td><td>All</td><td>ScheduledActivity ActivityTypeCode=ECN</td></tr>
+    <tr><td>5</td><td>Equity-Cancel immediate cancel when equity date reached</td><td>All</td><td>TransACT Cancel fires</td></tr>
+    <tr><td>6</td><td class="disabled">LTCH does NOT fire (regression guard)</td><td>All</td><td>No LTCH activity, no chargeType=L</td></tr>
+    <tr><td>7</td><td class="disabled">RMDR does NOT fire (regression guard)</td><td>All</td><td>No RMDR activity</td></tr>
+    <tr><td>8</td><td>COL enters when balance &gt; CollectionBalanceStart</td><td>All</td><td>CollectionsRecord created</td></tr>
+    <tr><td>9</td><td>COL Letter2 fires at day 21 under SFPC</td><td>All</td><td>Letter2 documentSet renders</td></tr>
+    <tr><td>10</td><td>COL Letter3 does NOT fire under SFPC plan</td><td>All</td><td>No Letter3 (SFPC cadence stops at LTR2)</td></tr>
+    <tr><td>11</td><td>COL stop threshold: SFPC=99999 effectively never stops — verify intentional</td><td>All</td><td>StopCOLConditions=False under SFPC</td></tr>
+    <tr><td>12</td><td>Correct template — SFP</td><td class="company-sfp">Safepoint</td><td>SIC NTC 04 07 03 16 … templates rendered</td></tr>
+    <tr><td>13</td><td>Correct template — CIC</td><td class="company-cic">Cajun</td><td>… _CJN.doc templates rendered</td></tr>
+    <tr><td>14</td><td>Correct template — MIE</td><td class="company-mie">Manatee</td><td>MIE NTC 04 04 10 23 … _MNT.doc rendered</td></tr>
+    <tr><td>15</td><td>LOB-specific NOC form-number switch</td><td>SFP LA Select Dwelling</td><td>SIC NTC 0405 01 16 prefix used</td></tr>
+    <tr><td>16</td><td>AOI copy sent to all 10 interest types</td><td class="company-sfp">Safepoint</td><td>10 AOI notices generated</td></tr>
+    <tr><td>17</td><td>AOI copy restricted to PremiumFinance</td><td class="company-cic">Cajun</td><td>Only PremiumFinance AOI copy</td></tr>
+    <tr><td>18</td><td>Manatee NOW path collision (Risk 14)</td><td class="company-mie">Manatee</td><td>Verify no session write of IsSafepointNOW=True</td></tr>
+    <tr><td>19</td><td>Print-queue file lands in correct company folder</td><td>All</td><td>File in SFP / CJN / MNT folder accordingly</td></tr>
+    <tr><td>20</td><td>Email From derives correctly from company</td><td>All</td><td>FormsEmailData lookup returns correct domain</td></tr>
+    <tr><td>21</td><td>Grace period respects blackout calendar</td><td>All</td><td>Date shifts to business day per method +/-</td></tr>
+    <tr><td>22</td><td>SuppressedInvoice blocks PCN/RMDR/LTCH/REIN but NOT COL</td><td>All</td><td>Only COL Processor.IsEnabled=True</td></tr>
+    <tr><td>23</td><td>PolicyTransfer suppresses COL</td><td>All</td><td>COL Processor.IsEnabled=False</td></tr>
+    <tr><td>24</td><td>Reinstate blocked when partial payment only</td><td>All</td><td>RaiseError_ReinstateActivityDatePassed raised</td></tr>
+    <tr><td>25</td><td>Async retry harness resubmits failed PCN send</td><td>All</td><td>Semaphore-based resubmission works</td></tr>
+    <tr><td>26</td><td>NOCF issues follow-up PCN after partial payment</td><td>All</td><td>New PCN activity created, previous NOCF expired</td></tr>
+    <tr><td>27</td><td>MPR data audit — is @MPR='1' ever set?</td><td>All</td><td>Data audit only</td></tr>
+    <tr><td>28</td><td>50-state cancellation-notice compliance audit</td><td>All</td><td>Legal review vs SPCDN1 10/5/365</td></tr>
+  </tbody>
+</table>
+
+<h2 id="s18" class="anchor">18. Final Findings and Open Items</h2>
+
+<h3>18.1 Key confirmed findings</h3>
+<ol>
+  <li><strong>PCN, Reinstate, and Internal Collections are fully functional</strong> for all three companies. Business rules are 100% company-agnostic.</li>
+  <li><strong>Late Charges and Reminder Notices are silently disabled</strong> at the carrier dispatch layer. RMDR requires two-layer fix.</li>
+  <li><strong>No Duck Creek Workflow-engine artifact</strong> drives any follow-up processing.</li>
+  <li><strong>No named batch jobs</strong> exist for any follow-up notice type.</li>
+  <li><strong>Custom Safepoint-authored processes</strong> introduce Billing-initiated Policy transactions via Send.postRq + TransACT.startTransactionRq — no explicit onFailure at the TransACT node.</li>
+  <li><strong>The only genuine per-company business-rule variance</strong> is AOI/mortgagee copy-distribution filter.</li>
+</ol>
+
+<h3>18.2 Areas Needing Business Clarification</h3>
+<ol>
+  <li>Is LTCH &amp; RMDR disablement intentional?</li>
+  <li>Is narrow AOI distribution for CIC/MIE intentional?</li>
+  <li>Is MPR ever actually invoked for any live policy?</li>
+  <li>Do any of the 50 states have a legally mandated minimum notice period different from SPCDN1?</li>
+  <li>Is the absence of Letter3 template at carrier layer intentional?</li>
+</ol>
+
+<h3>18.3 Areas Requiring Code Cleanup</h3>
+<ol>
+  <li>Consolidate duplicate PCN/Cancel/Rescission tables across PCN Rules / NOL Rules / Cancellation-DueToEquity.</li>
+  <li>Rename SFPC cadence table id or CollectionPlans row key to eliminate collision.</li>
+  <li>Fix IsManateeNOW path bug.</li>
+  <li>Standardize the company-discriminator idiom.</li>
+  <li>Correct duplicate "Platinum" captions.</li>
+  <li>Move base-hard-coded Task1 AssignedUserId and Insurance* placeholders to configurable lookup.</li>
+  <li>Add explicit onFailure at TransACT.startTransactionRq node level in NOL / Equity-Cancel / REIN.</li>
+</ol>
+
+<h3>18.4 Not Verified from Codebase / Cross-Subsystem</h3>
+<ul>
+  <li>Actual poll frequency of Billing Monitor Windows service.</li>
+  <li>Whether any live policy sets PolicyTermConfig/MPR/@MPR='1'.</li>
+  <li>Whether do-not-send / invalid-address / comm-preference suppression exists in Party subsystem.</li>
+  <li>Which verb consumes FormsEmailData for outbound collections email.</li>
+</ul>
+
+<h2 id="s19" class="anchor">19. Overview &amp; Summary (Executive Recap)</h2>
+
+<h3>19.1 What this document is</h3>
+<p>A codebase-verified BA/QA-grade technical analysis of the <strong>Billing Follow-Up subsystem</strong> in Safepoint's Duck Creek Billing configuration, covering the three writing companies <span class="company-sfp">Safepoint (SIC / 9999-1)</span>, <span class="company-cic">Cajun (CIC / 8888-2)</span> and <span class="company-mie">Manatee (MIE / 7777-3)</span>. Every rule, table row, dispatch entry, template file name, verb call, and integration setting cited here was re-read directly from <code>f:\DuckCreek\Billing\ManuScripts\</code> and <code>f:\DuckCreek\Billing\Shared\</code> — the input baseline was used only as a reading list.</p>
+
+<h3>19.2 Architecture in one paragraph</h3>
+<p>A <strong>single carrier dispatch manuscript</strong> (<code>Carrier_Billing_Events_FollowUp_Manager_1_0_0_0</code>, <code>inherited="Billing_Events_FollowUp_Manager_1_0_0_0"</code>) drives <strong>five processor types</strong> — PCN (OrderId 1, Policy), REIN (2, Policy), RMDR (3, Account), LTCH (4, Account), COL (5, Policy) — across <strong>three flow types</strong> (Evaluate / Execute / Generate). The dispatch is a <strong>table lookup</strong> (<code>ProcessorsConfiguration</code>, <code>tableType="local" override="1"</code>) resolved at runtime via <code>ManuScript.getFieldDetailRq</code>. There is <strong>no Duck Creek Workflow-engine artifact</strong> anywhere in the pipeline; <code>Carrier_Billing_Workflow.xml</code> is an empty <code>&lt;model/&gt;</code>. Actual scheduling is done by writing <code>ScheduledActivity</code> rows (status <code>P</code>), which the .NET <strong>Billing Monitor service</strong> (<code>DuckCreek.BillingMonitoring.dll</code>) polls and dispatches into <code>BillingFollowUpObj.executeFollowUpActivityRq</code>. Correspondence is generated by <code>Carrier_Forms_Letters_Manuscript_1_0_0_0.xml</code> which contains the company discriminator (paired <code>_Account.ProcessingOrgUnitCode</code> AND <code>_PolicyTerm.PolicyTermProcessingOrgUnitCode</code> checks) and the AOI/mortgagee copy-distribution filter — the only true company-specific business rule.</p>
+
+<h3>19.3 Five headline findings</h3>
+<ol>
+  <li><strong>LTCH &amp; RMDR are silently disabled at the carrier layer.</strong> All six dispatch rows point to no-op boolean fields. Base RMDR Execute is also a stub.</li>
+  <li><strong>PCN, Reinstate, Internal Collections are fully functional</strong> and 100% common across the three companies at the business-rule level.</li>
+  <li><strong>The only genuine per-company business-rule variance is the AOI copy-distribution filter</strong> — SFP=10 interest types; CIC/MIE=PremiumFinance only.</li>
+  <li><strong>Two Billing-initiated Policy transactions bypass Policy-UI transaction start</strong> — NOL and Equity-Cancel. Both invoke TransACT Cancel via Send.postRq.</li>
+  <li><strong>No named batch jobs exist for any follow-up notice type</strong> — only BatchScript_RetryRequests. All timing depends on the Billing Monitor Windows service (out-of-scope schedule).</li>
+</ol>
+
+<h3>19.4 What differs by company (at a glance)</h3>
+<table class="grid">
+  <caption>Table 19.4.1 — Company differences summary</caption>
+  <thead><tr><th>Aspect</th><th class="company-sfp">Safepoint</th><th class="company-cic">Cajun</th><th class="company-mie">Manatee</th></tr></thead>
+  <tbody>
+    <tr><td>Discriminator codes</td><td>Account 9999 + PolicyTerm 1</td><td>Account 8888 + PolicyTerm 2</td><td>Account 7777 + PolicyTerm 3</td></tr>
+    <tr><td>Business rules</td><td>Shared</td><td>Shared</td><td>Shared</td></tr>
+    <tr><td>AOI copy distribution</td><td>10 interest types</td><td>PremiumFinance only</td><td>PremiumFinance only</td></tr>
+    <tr><td>Template family</td><td>SIC NTC 04 07 03 16 … (+ LOB-specific SIC NTC 0405 xx yy)</td><td>_CJN.doc suffix</td><td>Independent MIE NTC 04 04 10 23 … + _MNT.doc</td></tr>
+    <tr><td>Print queue folder</td><td>Billing.SFPQueueAttachments</td><td>Billing.CJNQueueAttachments</td><td>Billing.MNTQueueAttachments</td></tr>
+    <tr><td>Collections email from</td><td>noreply@safepointins.com</td><td>noreply@cajunuw.com</td><td>noreply@manatee-insurance.com</td></tr>
+  </tbody>
+</table>
+
+<h3>19.5 Notable code-quality findings</h3>
+<ul>
+  <li><strong>Source-code bug</strong> — <code>NoticeOfWithDraw_WorkingFields.IsManateeNOW</code> defined with <code>path="IsSafepointNOW"</code>.</li>
+  <li><strong>Three Platinum-captioned rows</strong> in PCNPlans; similar in RescissionPlans.</li>
+  <li><strong>SFPC name collision</strong> in Carrier COL manuscript.</li>
+  <li><strong>Three-way duplicate of PCN / Cancel / Rescission / SPCancelPlansAssignment tables</strong> — any edit must be applied three times.</li>
+  <li><strong>10 dormant CDN1..CDN9 rows</strong> in CancelDaysNoticePlans.</li>
+  <li><strong>Hard-coded base values</strong> (Task1 AssignedUserId=1, John Q Accountant, 888-000-0000).</li>
+  <li><strong>50-state cancellation compliance risk</strong> — uniform SPCDN1 despite state-per-row schema.</li>
+</ul>
+
+<h3>19.6 Where to go from here</h3>
+<p><strong>For business/underwriting:</strong> confirm LTCH &amp; RMDR disablement, confirm narrow AOI for CIC/MIE, data audit for MPR usage, state-by-state legal review vs SPCDN1.</p>
+<p><strong>For engineering:</strong> fix IsManateeNOW bug, consolidate duplicate tables, standardize discriminator idiom, add explicit onFailure to TransACT calls, add regression tests especially guards for LTCH/RMDR disablement.</p>
+
+<h3>19.7 Sources of truth used</h3>
+<table class="grid">
+  <caption>Table 19.7.1 — File-level sources</caption>
+  <thead><tr><th>Purpose</th><th>File(s)</th></tr></thead>
+  <tbody>
+    <tr><td>Dispatch table</td><td>Carrier_Billing_Events_FollowUp_Manager_1_0_0_0.xml (+ base)</td></tr>
+    <tr><td>PCN rules and plan tables</td><td>Carrier_Billing_Events_FollowUp_PCN_Rules_1_0_0_0.xml</td></tr>
+    <tr><td>NOL logic</td><td>Carrier_Billing_Events_NoticeOfLapse_Rules_1_0_0_0.xml</td></tr>
+    <tr><td>Equity-Cancel logic</td><td>Carrier_Billing_Events_Cancellation_DueToEquity_1_0_0_0.xml</td></tr>
+    <tr><td>COL cadence, thresholds, email domains</td><td>Carrier_Billing_Events_FollowUp_COL_Rules_1_0_0_0.xml (+ base for Letter3, Task1)</td></tr>
+    <tr><td>Reinstate plans</td><td>Carrier_Billing_Events_FollowUp_Reinstate_Rules_1_0_0_0.xml</td></tr>
+    <tr><td>LTCH &amp; RMDR disable stubs</td><td>Carrier_Billing_Events_FollowUp_LateCharge_Rules_1_0_0_0.xml, Carrier_Billing_Events_FollowUp_ReminderNotice_Rules_1_0_0_0.xml (+ base)</td></tr>
+    <tr><td>Templates, AOI filter, discriminator, AgencyMail</td><td>Carrier_Forms_Letters_Manuscript_1_0_0_0.xml</td></tr>
+    <tr><td>Empty carrier shells</td><td>Carrier_Billing_Workflow.xml, Carrier_Billing_Charges_LateCharges_Rules_US_1_0_0_0.xml, Carrier_Billing_FollowUp_Generate_MPR_1_0_0_0.xml and siblings</td></tr>
+    <tr><td>Batch retry</td><td>Billing/BatchScripts/BatchRetryRequest.xml, Billing/Shared/BatchScriptsCatalog.xml</td></tr>
+    <tr><td>Event dispatch, verb registry, catalog</td><td>Billing/Shared/BillingConfig.xml, BillingRequestMap.xml, ManuScriptCatalog.xml</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+</main>
+</div>
+
+</body>
+</html>
